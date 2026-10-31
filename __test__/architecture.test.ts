@@ -43,13 +43,15 @@ function runtimeImports(): RuntimeImport[] {
 }
 
 /**
- * Returns the files outside a folder that import, at runtime, a module matched by the given test.
- * @param folder folder allowed to import the module
+ * Returns the files outside the allowed paths that import, at runtime, a module matched by the given test.
+ * @param allowed folders or files allowed to import the module
  * @param imports whether a specifier is the module
  */
-function importersOutside(folder: string, imports: (specifier: string) => boolean): string[] {
+function importersOutside(allowed: string | string[], imports: (specifier: string) => boolean): string[] {
+    const paths = Array.isArray(allowed) ? allowed : [allowed];
+
     return runtimeImports()
-        .filter(({ file, specifier }) => imports(specifier) && !file.startsWith(folder))
+        .filter(({ file, specifier }) => imports(specifier) && !paths.some(path => file.startsWith(path)))
         .map(({ file, specifier }) => `${file} -> ${specifier}`);
 }
 
@@ -61,12 +63,18 @@ describe('module isolation', () => {
         expect(importersOutside(folder, specifier => specifier.startsWith(folder))).toEqual([]);
     });
 
+    /* The optional peer dependencies are listed in the README with the components that need them: these are the only
+       files allowed to import them at runtime, so the list stays true. */
     test.each([
-        ['axios', 'src/http/'],
-        ['exceljs', 'src/export/xlsx/'],
-        ['echarts', 'src/component/organism/EChart/']
-    ])('only the files that need %s import it', (dependency, folder) => {
-        expect(importersOutside(folder, specifier => specifier === dependency)).toEqual([]);
+        ['axios', ['src/http/']],
+        ['exceljs', ['src/export/xlsx/']],
+        ['echarts', ['src/component/organism/EChart/']],
+        ['@mantine/dates', ['src/component/atom/DateField/']],
+        ['@mantine/modals', ['src/component/organism/DataForm/', 'src/component/organism/Table/RowActions.tsx']],
+        ['@mantine/form', []],
+        ['zod', ['src/util/ValidationUtil.ts']]
+    ])('only the files that need %s import it', (dependency, allowed) => {
+        expect(importersOutside(allowed, specifier => specifier === dependency)).toEqual([]);
     });
 
     // A static import would put the whole library in the bundle of every page that may show a chart or export a file.

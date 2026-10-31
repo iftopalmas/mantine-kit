@@ -1010,6 +1010,12 @@ __metadata:
     react-dom: ^19.2.0
     zod: ^4.6.6
   peerDependenciesMeta:
+    "@mantine/dates":
+      optional: true
+    "@mantine/form":
+      optional: true
+    "@mantine/modals":
+      optional: true
     axios:
       optional: true
     echarts:

@@ -1,7 +1,7 @@
 import React, { ReactElement, useState } from 'react';
 
 import { Alert, Box, Button, Grid, Group, LoadingOverlay, Stack, Text } from '@mantine/core';
-import { UseFormReturnType } from '@mantine/form';
+import type { UseFormReturnType } from '@mantine/form';
 import { IconArrowBack, IconDeviceFloppy, IconInfoCircle } from '@tabler/icons-react';
 
 import { SaveDataSource } from '../../../data/SaveDataSource';
