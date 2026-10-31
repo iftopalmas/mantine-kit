@@ -23,6 +23,9 @@ dark color schemes.
 */
 const ROW_HOVER_COLOR = 'var(--mantine-primary-color-light)';
 
+/** Initial records of the table, while they are fetched; a single constant, so it is stable across renders. */
+const NO_RECORDS: readonly Identifiable[] = [];
+
 /** Which actions the table shows for each record. */
 export type ActionsSettings = {
     /** Whether the actions column is shown. */
@@ -145,7 +148,7 @@ const Table = <M extends Identifiable, S extends ListDataSource<M>>(props: Table
     const navigate = router.useNavigate();
     const settings: ActionsSettings = { ...DEFAULT_ACTIONS_SETTINGS, ...props.actionsSettings };
 
-    const { data: fetchedData, loading, error } = useService(fetchMethod);
+    const { data: fetchedData, loading, error } = useService(fetchMethod, NO_RECORDS as M[]);
     const [data, setData] = useState<M[]>([]);
 
     useEffect(() => setData(fetchedData), [fetchedData]);
