@@ -1,0 +1,52 @@
+# Publishes the library to npm (https://www.npmjs.com/package/@ifto/mantine-kit) when a version tag is created.
+#
+# To publish: update "version" in package.json, merge it into main and create the tag with the same number, prefixed
+# by "v" (e.g. `git tag v0.1.0 && git push origin v0.1.0`). Versions with a suffix (e.g. v0.2.0-beta.1) are published
+# with the "next" dist-tag, so whoever installs without a version keeps getting the latest stable one.
+#
+# Authentication: the NPM_TOKEN secret (an npm granular access token allowed to publish in the @ifto scope). The job
+# also has `id-token: write`, which generates the provenance statement of the release and allows replacing the token
+# with the npm trusted publishing once the package exists in the registry.
+name: Publish
+
+on:
+    push:
+        # Only semantic versions (https://semver.org), as npm requires: vMAJOR.MINOR.PATCH, optionally with a pre-release
+        # suffix (e.g. v1.2.3 or v1.2.3-beta.1).
+        tags:
+            - 'v[0-9]+.[0-9]+.[0-9]+'
+            - 'v[0-9]+.[0-9]+.[0-9]+-*'
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+        environment: npm
+        permissions:
+            contents: read
+            id-token: write
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version-file: .nvmrc
+                  registry-url: https://registry.npmjs.org
+            - run: corepack enable
+            - run: yarn install --immutable
+
+            - name: Check that the tag matches the version of package.json
+              run: |
+                  VERSION=$(node -p "require('./package.json').version")
+                  if [ "v$VERSION" != "$GITHUB_REF_NAME" ]; then
+                      echo "::error::Tag $GITHUB_REF_NAME does not match version $VERSION of package.json"
+                      exit 1
+                  fi
+
+            - run: yarn test
+            - run: yarn build
+
+            - name: Publish to npm
+              run: |
+                  if [[ "$GITHUB_REF_NAME" == *-* ]]; then DIST_TAG=next; else DIST_TAG=latest; fi
+                  npm publish --provenance --access public --tag "$DIST_TAG"
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

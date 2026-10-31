@@ -1,0 +1,169 @@
+/**
+ * @jest-environment node
+ */
+import { describe, expect, jest, test } from '@jest/globals';
+import ExcelJS, { CellRichTextValue, Worksheet } from 'exceljs';
+
+import { ExportDocument } from '@/src/export/ExportDocument';
+import { XLSX_FORMAT } from '@/src/export/ExportFormats';
+import { XlsxFormat } from '@/src/export/xlsx/XlsxFormat';
+import { LOGO_ROWS, xlsxStyles } from '@/src/export/xlsx/XlsxStyle';
+import { exportDocument, SHEET } from '@/__test__/export/ExportFixture';
+
+/* The first file generated in a test run loads ExcelJS, which is big: with all test files running in parallel, it can
+   take longer than the default timeout of 5 s. */
+jest.setTimeout(30_000);
+
+/* Runs in the Node environment, and not in jsdom, to read back the generated file with ExcelJS itself, as Excel would
+   read it. */
+
+/** Row of the table header with the logo: after the logo, the title, the date, the 2 info rows and a blank row. */
+const HEADER_ROW = LOGO_ROWS + 6;
+
+/** Default styles of the file, to check the highlights. */
+const STYLES = xlsxStyles();
+
+/**
+ * Generates the `.xlsx` of a document and reads it back.
+ * @param document exported document
+ * @param format format that generates the file
+ * @return the workbook read from the generated file
+ */
+async function generateWorkbook(
+    document: ExportDocument = exportDocument(),
+    format: XlsxFormat = XLSX_FORMAT
+): Promise<ExcelJS.Workbook> {
+    const blob = await format.generate(document);
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(await blob.arrayBuffer());
+
+    return workbook;
+}
+
+/**
+ * Returns the values of a row of the sheet, from the first column on.
+ * @param sheet sheet read
+ * @param row row number
+ */
+function rowValues(sheet: Worksheet, row: number): unknown[] {
+    return (sheet.getRow(row).values as unknown[]).slice(1);
+}
+
+/**
+ * Returns the text of a rich text cell of the first column, joining its parts.
+ * @param sheet sheet read
+ * @param row row number
+ */
+function richText(sheet: Worksheet, row: number): string {
+    return (sheet.getCell(row, 1).value as CellRichTextValue).richText.map(part => part.text).join('');
+}
+
+describe('XlsxFormat', () => {
+    test('generates a Blob with the Excel type', async () => {
+        const blob = await XLSX_FORMAT.generate(exportDocument());
+        expect(blob.type).toBe(XLSX_FORMAT.mimeType);
+        expect(blob.size).toBeGreaterThan(0);
+    });
+
+    test('creates a sheet for each sheet of the document, with the names adapted to Excel', async () => {
+        const workbook = await generateWorkbook(exportDocument([SHEET, { ...SHEET, name: 'Sales' }]));
+        expect(workbook.worksheets.map(sheet => sheet.name)).toEqual(['Sales', 'Sales (2)']);
+    });
+
+    test('writes the title, the generation date and the context info below the logo', async () => {
+        const sheet = (await generateWorkbook()).worksheets[0];
+        expect(sheet.getImages()).toHaveLength(1);
+        expect(sheet.getCell(LOGO_ROWS + 1, 1).value).toBe('Sales report');
+        expect(sheet.getCell(LOGO_ROWS + 2, 1).value).toBe('Generated on 10/20/2026 at 2:30 PM');
+        expect(richText(sheet, LOGO_ROWS + 3)).toBe('Period: 2026 to 2030');
+        expect(richText(sheet, LOGO_ROWS + 4)).toBe('Filter: All');
+    });
+
+    test('starts with the title when there is no logo', async () => {
+        const sheet = (await generateWorkbook(exportDocument([SHEET], false))).worksheets[0];
+        expect(sheet.getImages()).toHaveLength(0);
+        expect(sheet.getCell(1, 1).value).toBe('Sales report');
+    });
+
+    test('writes the header and keeps the numbers numeric, with the format of each cell', async () => {
+        const sheet = (await generateWorkbook()).worksheets[0];
+        expect(rowValues(sheet, HEADER_ROW)).toEqual(['Product name', 'Quantity', '2026']);
+
+        const quantity = sheet.getCell(HEADER_ROW + 1, 2);
+        expect(quantity.value).toBe(1234);
+        expect(quantity.numFmt).toBe('#,##0');
+
+        const percentage = sheet.getCell(HEADER_ROW + 1, 3);
+        expect(percentage.value).toBe(0.855);
+        expect(percentage.numFmt).toBe('0.0%');
+    });
+
+    test('tells zero, absent value and invalid result apart', async () => {
+        const sheet = (await generateWorkbook()).worksheets[0];
+        expect(sheet.getCell(HEADER_ROW + 2, 2).value).toBe(0);
+        expect(sheet.getCell(HEADER_ROW + 2, 3).value).toBeNull();
+        expect(sheet.getCell(HEADER_ROW + 3, 2).value).toBeNull();
+        expect(sheet.getCell(HEADER_ROW + 3, 3).value).toBe('Error');
+    });
+
+    test('writes the footer with the link of the system and repeats it in the footer of the printed pages', async () => {
+        const sheet = (await generateWorkbook()).worksheets[0];
+        const footerRow = HEADER_ROW + SHEET.rows.length + 2;
+        expect(sheet.getCell(footerRow, 1).value).toBe('Data generated by System');
+        expect(sheet.getCell(footerRow + 1, 1).value).toEqual({
+            text: 'https://system.example.com',
+            hyperlink: 'https://system.example.com'
+        });
+        expect(sheet.headerFooter.oddFooter).toContain('Data generated by System - https://system.example.com');
+        expect(sheet.headerFooter.oddFooter).toContain('Page &P of &N');
+        expect(sheet.pageSetup.printTitlesRow).toBe(`${HEADER_ROW}:${HEADER_ROW}`);
+    });
+
+    test('writes the texts in the locale of the document', async () => {
+        const sheet = (await generateWorkbook({ ...exportDocument(), locale: 'pt-BR' })).worksheets[0];
+        expect(sheet.getCell(LOGO_ROWS + 2, 1).value).toBe('Gerado em 20/10/2026 às 14:30');
+        expect(sheet.getCell(HEADER_ROW + SHEET.rows.length + 2, 1).value).toBe('Dados gerados pelo System');
+        expect(sheet.headerFooter.oddFooter).toContain('Página &P de &N');
+    });
+
+    test('fits the width of the columns to the text of the table', async () => {
+        const sheet = (await generateWorkbook()).worksheets[0];
+        expect(sheet.getColumn(1).width).toBe('Product name'.length + 2);
+        expect(sheet.getColumn(2).width).toBe('Quantity'.length + 2);
+    });
+
+    test('puts the Excel filter in the header and highlights the invalid results and the even rows', async () => {
+        const sheet = (await generateWorkbook()).worksheets[0];
+        const lastRow = HEADER_ROW + SHEET.rows.length;
+        // Read back from the file, the filter comes in the Excel range format: from the header (A) to the last column (C).
+        expect(sheet.autoFilter).toBe(`A${HEADER_ROW}:C${lastRow}`);
+        expect(sheet.getCell(lastRow, 3).font).toEqual(STYLES.invalidFont);
+        expect(sheet.getCell(HEADER_ROW + 1, 1).fill).not.toEqual(STYLES.zebraFill);
+        expect(sheet.getCell(HEADER_ROW + 2, 1).fill).toEqual(STYLES.zebraFill);
+    });
+
+    test('exports a sheet without rows with just the header', async () => {
+        const sheet = (await generateWorkbook(exportDocument([{ ...SHEET, rows: [] }]))).worksheets[0];
+        expect(rowValues(sheet, HEADER_ROW)).toEqual(['Product name', 'Quantity', '2026']);
+        expect(sheet.autoFilter).toBeUndefined();
+    });
+
+    test('rejects a document without sheets', async () => {
+        await expect(XLSX_FORMAT.generate(exportDocument([]))).rejects.toThrow('There is no data to export.');
+    });
+
+    // The extra cells would be lost without warning, so whoever built the wrong document finds out.
+    test('rejects a row with more cells than columns', async () => {
+        const longRow = { ...SHEET, rows: [['Water', 1, 2, 'extra']] };
+        await expect(XLSX_FORMAT.generate(exportDocument([longRow]))).rejects.toThrow('has 4 cells');
+    });
+
+    test('uses the colors given to the format, such as the brand colors of the app', async () => {
+        const format = new XlsxFormat({ colors: { primary: 'FF2B8A3E' } });
+        const sheet = (await generateWorkbook(exportDocument(), format)).worksheets[0];
+
+        expect(sheet.getCell(LOGO_ROWS + 1, 1).font.color).toEqual({ argb: 'FF2B8A3E' });
+        expect(sheet.getCell(HEADER_ROW, 1).fill).toEqual(xlsxStyles({ primary: 'FF2B8A3E' }).headerFill);
+        expect(sheet.getCell(HEADER_ROW + 2, 1).fill).toEqual(STYLES.zebraFill);
+    });
+});

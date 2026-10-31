@@ -1,0 +1,93 @@
+/*
+Print rules of the whole app, mainly used by the reports (PrintPage): the user prints the page or saves it as PDF with
+the browser itself.
+*/
+
+/*
+Named pages of the reports: the paper size, the margins and the page number in the margin (only Chrome/Edge 131+ show
+the page margins) apply only to the PrintPage, which uses one of them according to the orientation. Outside the
+reports, the user chooses the paper and the orientation in the print dialog. Both pages repeat the margins, since a
+named page does not inherit from another one. The page number is language neutral ("3 / 10"), since CSS cannot read
+the locale of the app. CSS cannot read the name of the system either: an app that wants the footer text (`footer` of
+the export texts) in the margin adds a `@bottom-left` to the `report` and `report-landscape` pages in its own CSS.
+*/
+@page report {
+    size: A4;
+    margin: 15mm 12mm 18mm;
+
+    @bottom-right {
+        content: counter(page) ' / ' counter(pages);
+        font-size: 8pt;
+        color: #5f6b7a;
+    }
+}
+
+/* Wide tables (e.g. a year per column). */
+@page report-landscape {
+    size: A4 landscape;
+    margin: 15mm 12mm 18mm;
+
+    @bottom-right {
+        content: counter(page) ' / ' counter(pages);
+        font-size: 8pt;
+        color: #5f6b7a;
+    }
+}
+
+[data-print-orientation='portrait'] {
+    page: report;
+}
+
+[data-print-orientation='landscape'] {
+    page: report-landscape;
+}
+
+@media print {
+    /* The header and the menu of the app are not part of the printed document. */
+    .mantine-AppShell-header,
+    .mantine-AppShell-navbar,
+    [data-print-hidden] {
+        display: none !important;
+    }
+
+    .mantine-AppShell-main {
+        padding: 0 !important;
+        min-height: 0 !important;
+    }
+
+    /* Only in the reports, colors and backgrounds are printed as on screen (e.g. the table header), without the user
+       having to check "Background graphics". In the other pages, the choice of the user in the print dialog applies. */
+    [data-print-orientation] {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    /* Repeats the table header on every page and does not cut a row in half. */
+    thead {
+        display: table-header-group;
+    }
+
+    tfoot {
+        display: table-footer-group;
+    }
+
+    tr,
+    [data-print-block] {
+        break-inside: avoid;
+    }
+
+    [data-print-new-page] {
+        break-before: page;
+    }
+
+    [data-print-keep-with-next] {
+        break-after: avoid;
+    }
+
+    /* A scroll container would make the browser cut the table, instead of splitting it across pages. */
+    .mantine-Table-scrollContainer,
+    .mantine-ScrollArea-root,
+    .mantine-ScrollArea-viewport {
+        overflow: visible !important;
+    }
+}

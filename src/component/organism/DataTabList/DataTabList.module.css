@@ -1,0 +1,27 @@
+/*
+ * Tabs as wide as their own text (without stretching to fill the row), up to a maximum width.
+ * A title longer than the limit wraps in more than one line inside the tab, instead of widening it.
+ */
+.tab {
+    max-width: 14rem;
+    min-height: 2.5rem;
+    white-space: normal;
+    line-height: 1.25;
+
+    /* Border on the inactive tabs, so they look clickable, and not like loose text of the page. */
+    border: 1px solid var(--mantine-color-default-border);
+}
+
+.tab[data-active] {
+    border-color: var(--mantine-primary-color-filled);
+}
+
+/* Same size for any given icon, so all tabs have the same height. */
+.tabSection svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.panel {
+    padding-top: var(--mantine-spacing-xs);
+}

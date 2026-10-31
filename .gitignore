@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.eslintcache
+.stylelintcache
+*.log
+*.tgz
+.env
+.env.*
+.DS_Store
+
+# Yarn 4 (sem Plug'n'Play)
+.yarn/*
+!.yarn/releases
+.pnp.*
