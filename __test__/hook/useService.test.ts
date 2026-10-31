@@ -25,6 +25,23 @@ describe('useService', () => {
         expect(result.current.data).toBe('data');
     });
 
+    // Without an initial value, data is undefined while loading, and not an empty array of the wrong type.
+    test('data is undefined while loading when no initial value is given', () => {
+        const { result } = renderHook(() => useService(() => pending().promise));
+
+        expect(result.current).toEqual({ data: undefined, error: null, loading: true });
+    });
+
+    test('data is the initial value while loading and after a failure', async () => {
+        const error = new Error('HTTP 500');
+        const fetch = () => Promise.reject<string[]>(error);
+        const { result } = renderHook(() => useService(fetch, []));
+
+        expect(result.current.data).toEqual([]);
+        await waitFor(() => expect(result.current.loading).toBe(false));
+        expect(result.current).toEqual({ data: [], error, loading: false });
+    });
+
     // E.g. changing a filter: if the fetch of the previous filter answers last, the list would show its data.
     test('ignores the response of a fetch that was replaced by another one', async () => {
         const old = pending();
