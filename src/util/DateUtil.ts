@@ -1,5 +1,7 @@
 import dayjs from 'dayjs';
-import type { DateValue } from '@mantine/dates';
+
+/** Value of a date field: a `Date`, a text in the given format, or nothing. */
+export type DateFieldValue = Date | string | null | undefined;
 
 export const BR_DATE_FORMAT = 'DD/MM/YYYY';
 export const ISO_DATE_FORMAT = 'YYYY-MM-DD';
@@ -35,7 +37,7 @@ export function formatDateToISO(date: Date | undefined | null): string | null {
  * @param format format of the date, in Day.js tokens; defaults to {@link BR_DATE_FORMAT}
  * @return the date, or `null` if there is no date
  */
-export function parseDate(dateValue: DateValue | string | undefined, format: string = BR_DATE_FORMAT): Date | null {
+export function parseDate(dateValue: DateFieldValue, format: string = BR_DATE_FORMAT): Date | null {
     return dateValue ? dayjs(dateValue, format).toDate() : null;
 }
 
