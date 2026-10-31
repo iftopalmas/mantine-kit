@@ -2,6 +2,7 @@
 
 [![Build](https://github.com/iftopalmas/mantine-kit/actions/workflows/build.yml/badge.svg)](https://github.com/iftopalmas/mantine-kit/actions/workflows/build.yml)
 [![npm](https://img.shields.io/npm/v/@ifto/mantine-kit)](https://www.npmjs.com/package/@ifto/mantine-kit)
+[![Storybook](https://img.shields.io/badge/docs-Storybook-ff4785)](https://iftopalmas.github.io/mantine-kit/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 General purpose [Mantine](https://mantine.dev) components for business React apps: CRUD tables and forms, an app
@@ -19,6 +20,8 @@ a REST HTTP client.
   ExcelJS are loaded on demand.
 - **Ready for the Next.js App Router.** Every module is marked as a Client Component.
 
+**Documentation of every component, with live examples: [Storybook](https://iftopalmas.github.io/mantine-kit/).**
+
 ## Contents
 
 - [How to use](#how-to-use)
@@ -26,6 +29,7 @@ a REST HTTP client.
 - [Configuration](#configuration)
 - [Components](#components)
 - [Internationalization](#internationalization)
+- [Storybook](#storybook)
 - [Development](#development)
 - [Publishing](#publishing)
 
@@ -276,6 +280,8 @@ try {
 By default, the message and the code of an error are read from the `message` and `code` fields of the response body
 (the error format of a Spring API). For another format, give an `errorParser` in the configuration.
 
+More examples, with every state of each component, are in the [Storybook](https://iftopalmas.github.io/mantine-kit/).
+
 ## Configuration
 
 Options of the `KitProvider`:
@@ -419,6 +425,20 @@ Choose the locale and override any text in the `KitProvider`. An app that alread
 Code outside React receives the locale (and, optionally, texts) directly: `ExportDocument.locale`,
 `ChartContext.locale` and `AxiosHttpClientConfig.locale`. URLs are not translated: the CRUD route segments are a
 separate option (`formRouteSegments`).
+
+## Storybook
+
+The [Storybook](https://iftopalmas.github.io/mantine-kit/) documents every component: a **Docs** page per component,
+generated from its props types and JSDoc, and stories with examples of its states, whose props can be changed in the
+**Controls** panel. The toolbar switches the locale (`en-US`/`pt-BR`) and the theme (light/dark) of all stories.
+
+```bash
+yarn storybook         # development server at http://localhost:6006
+yarn storybook:build   # static site in storybook-static/
+```
+
+The stories live in `stories/`, mirroring `src/`. The [`storybook.yml`](.github/workflows/storybook.yml) workflow
+publishes the site to GitHub Pages on every push to `main`.
 
 ## Development
 

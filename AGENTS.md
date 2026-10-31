@@ -18,6 +18,7 @@ the GitHub Actions workflows also read.
 - `yarn typecheck` — `tsc --noEmit` (TypeScript 7)
 - `yarn build` — generates `dist/` (Vite, plus `tsc` for the `.d.ts` files)
 - `yarn prettier:write` — formats the code
+- `yarn storybook` / `yarn storybook:build` — Storybook development server (port 6006) / static site
 
 TypeScript 7 (`@typescript/native`) provides `tsc`; the `typescript` package is an alias of TypeScript 6, which only
 provides the compiler API typescript-eslint needs. Remove the alias when typescript-eslint supports TypeScript 7.
@@ -98,6 +99,19 @@ The cost is longer import paths, which the IDE writes automatically (auto import
   the Node environment (`@jest-environment node`).
 - The default locale is `en-US`, so most assertions of visible texts are in English; add `pt-BR` cases when a
   component shows texts.
+
+## Storybook
+
+- Every component has stories in `stories/`, mirroring `src/` (e.g. `stories/component/organism/Table.stories.tsx`),
+  which document it. Add or update the stories when creating or changing a component: the stories and the JSDoc of the
+  props are the documentation users read (the Docs page of each component is generated with `autodocs`).
+- Show the main states of the component (e.g. default, loading, empty, error) and use the in-memory data sources of
+  `stories/fixtures.ts`, never a real API.
+- The preview (`.storybook/preview.tsx`) wraps the stories in the same providers of an app, with toolbar options for
+  the locale and the color scheme. The Storybook has its own Vite config (`.storybook/vite.config.ts`), since the one of
+  the root builds the library.
+- `__test__/stories/stories.test.tsx` renders every story in both locales, so a broken story fails the tests.
+- The `storybook.yml` workflow publishes the Storybook to GitHub Pages on every push to `main`.
 
 ## Publishing
 

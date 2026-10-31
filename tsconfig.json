@@ -17,6 +17,6 @@
             "@/*": ["./*"]
         }
     },
-    "include": ["src", "__test__", "test-utils"],
+    "include": ["src", "__test__", "test-utils", "stories", ".storybook"],
     "exclude": ["node_modules", "dist"]
 }
