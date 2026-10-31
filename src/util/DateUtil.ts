@@ -1,5 +1,9 @@
 import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat.js';
 import type { DateValue } from '@mantine/dates';
+
+/* Without this plugin, Day.js ignores the format given to `dayjs(value, format)` and parses the text month first. */
+dayjs.extend(customParseFormat);
 
 export const BR_DATE_FORMAT = 'DD/MM/YYYY';
 export const ISO_DATE_FORMAT = 'YYYY-MM-DD';
