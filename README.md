@@ -463,9 +463,10 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-Versions with a suffix (e.g. `v0.2.0-beta.1`) are published with the `next` dist-tag. The workflow needs the
-`NPM_TOKEN` secret (an npm granular access token allowed to publish in the `@ifto` scope) in the `npm` environment of
-the repository.
+Versions with a suffix (e.g. `v0.2.0-beta.1`) are published with the `next` dist-tag. The workflow authenticates
+with [npm trusted publishing](https://docs.npmjs.com/trusted-publishers): the package trusts this workflow, which uses a
+short-lived token from GitHub, so no npm token is stored in the repository, and every release has a provenance
+statement.
 
 ## License
 
