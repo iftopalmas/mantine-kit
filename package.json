@@ -1,6 +1,6 @@
 {
     "name": "@ifto/mantine-kit",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "General purpose Mantine components for React apps: CRUD tables and forms, layout, ECharts charts, Excel/CSV export, print pages and a REST HTTP client, with i18n (en-US and pt-BR).",
     "license": "MIT",
     "author": "IFTO - Campus Palmas",
