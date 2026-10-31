@@ -13,6 +13,7 @@ import {
 import { Identifiable } from '../../../model/Identifiable';
 import { useKitConfig } from '../../../provider/useKit';
 import { columnComparator, Comparator } from './ColumnComparator';
+import { useRowKey } from './useRowKey';
 
 /** Options of records per page. The largest one lets long tables (and end-to-end tests) show every row in one page. */
 const PAGE_SIZES = [10, 20, 50, 200];
@@ -76,18 +77,6 @@ type TableProps<M extends Identifiable> = {
 } & DataTablePassThroughProps<M>;
 
 /**
- * Adds a unique key to each record shown in the table.
- * The array is changed in place, instead of copying each object with destructuring: a copy is a plain object, which
- * loses the accessors (get and set) of class instances, so reading an attribute through them would return nothing.
- * @param data records shown in the table
- * @return the same array, now with a `key` in each object
- */
-function addKeyToDataArray<M extends Identifiable>(data: M[]): M[] {
-    data.forEach((element, index) => Object.assign(element, { key: index.toString() }));
-    return data;
-}
-
-/**
  * The ViewTable component is a wrapper for the Mantine DataTable component.
  * @template M - Model that extends from {@link Identifiable}
  * @param data the data to be displayed in this ViewTable
@@ -137,7 +126,7 @@ const ViewTable = <M extends Identifiable>({
         const from = (page - 1) * pageSize;
         return sortedData.slice(from, from + pageSize);
     }, [sortedData, pagination, page, pageSize]);
-    const recordsWithKeys = addKeyToDataArray(records);
+    const rowKey = useRowKey<M>();
 
     function changeSortStatus(status: DataTableSortStatus<M>): void {
         setCompareActive(false);
@@ -189,7 +178,8 @@ const ViewTable = <M extends Identifiable>({
             verticalSpacing="sm"
             striped
             columns={effectiveColumns}
-            records={recordsWithKeys}
+            records={records}
+            idAccessor={rowKey}
             noRecordsText={messages.table.noRecords}
             fetching={loading}
             sortStatus={sortStatus}

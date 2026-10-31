@@ -1,4 +1,8 @@
 import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat.js';
+
+/* Without this plugin, Day.js ignores the format given to `dayjs(value, format)` and parses the text month first. */
+dayjs.extend(customParseFormat);
 
 /** Value of a date field: a `Date`, a text in the given format, or nothing. */
 export type DateFieldValue = Date | string | null | undefined;
