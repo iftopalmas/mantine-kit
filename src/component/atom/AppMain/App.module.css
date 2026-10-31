@@ -1,0 +1,17 @@
+.main {
+    min-height: 95vh;
+
+    @mixin light {
+        background-color: var(--mantine-color-gray-0);
+    }
+
+    @mixin dark {
+        background-color: var(--mantine-color-dark-6);
+    }
+
+    /* On paper, the page is white and only as tall as its content (see styles/print.css). */
+    @media print {
+        min-height: 0;
+        background-color: #fff !important;
+    }
+}

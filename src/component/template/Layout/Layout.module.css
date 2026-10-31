@@ -1,0 +1,41 @@
+.shrinkable {
+    min-width: 0;
+}
+
+.fixed {
+    flex-shrink: 0;
+}
+
+.icon {
+    width: 20px;
+    height: 20px;
+}
+
+.dark {
+    @mixin dark {
+        display: none;
+    }
+
+    @mixin light {
+        display: block;
+    }
+}
+
+.light {
+    @mixin light {
+        display: none;
+    }
+
+    @mixin dark {
+        display: block;
+    }
+}
+
+/* Responsive spacing of the header groups: the `gap` prop of the Mantine Group accepts no values per breakpoint. */
+.headerGap {
+    gap: var(--mantine-spacing-xs);
+
+    @mixin larger-than $mantine-breakpoint-sm {
+        gap: var(--mantine-spacing-md);
+    }
+}
