@@ -1,0 +1,30 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Introduction" />
+
+# @ifto/mantine-kit
+
+General purpose [Mantine](https://mantine.dev) components for business React apps: CRUD tables and forms, an app
+layout with a side menu, Apache ECharts charts, Excel/CSV export, print-ready reports and a REST HTTP client.
+
+Use the toolbar to switch the **locale** (`pt-BR` or `en-US`) and the **theme** (light or dark) of every story. Each
+component has a **Docs** page, generated from its props and JSDoc, and stories you can change with the **Controls**
+panel.
+
+## Setup in an app
+
+```tsx
+<MantineProvider>
+    <ModalsProvider>
+        <Notifications />
+        <KitProvider router={nextRouter} appName="My System" locale="en-US">
+            <App />
+        </KitProvider>
+    </ModalsProvider>
+</MantineProvider>
+```
+
+See the [README](https://github.com/iftopalmas/mantine-kit#readme) for the installation, the router adapters
+(Next.js and React Router) and the internationalization.
+
+In the stories, links use the default router (plain `<a>` links), so clicking them leaves the Storybook page.

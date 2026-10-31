@@ -14,3 +14,5 @@ coverage/
 .yarn/*
 !.yarn/releases
 .pnp.*
+storybook-static/
+*storybook.log

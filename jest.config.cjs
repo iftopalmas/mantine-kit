@@ -15,5 +15,7 @@ module.exports = {
     },
     collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts'],
     coverageThreshold: { global: { lines: 80 } },
-    testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/dist/']
+    testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/dist/', '<rootDir>/storybook-static/'],
+    // Storybook is published only as ESM, so SWC converts it to CommonJS, as the rest of the code (see stories.test.tsx).
+    transformIgnorePatterns: ['/node_modules/(?!(@storybook|storybook)/)']
 };

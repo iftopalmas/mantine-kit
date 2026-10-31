@@ -50,13 +50,15 @@
     "scripts": {
         "build": "rm -rf dist && vite build && tsc -p tsconfig.build.json && mkdir -p dist/styles && cp src/styles/print.css dist/styles/",
         "typecheck": "tsc --noEmit",
-        "lint": "eslint src __test__ test-utils && yarn lint:stylelint",
+        "lint": "eslint src __test__ test-utils stories .storybook && yarn lint:stylelint",
         "lint:stylelint": "stylelint 'src/**/*.css' --cache",
         "jest": "jest",
         "jest:watch": "jest --watch",
         "prettier:check": "prettier --check \"**/*.{ts,tsx,js,cjs,mjs,json}\"",
         "prettier:write": "prettier --write \"**/*.{ts,tsx,js,cjs,mjs,json}\"",
-        "test": "yarn prettier:check && yarn lint && yarn typecheck && yarn jest --coverage"
+        "test": "yarn prettier:check && yarn lint && yarn typecheck && yarn jest --coverage",
+        "storybook": "storybook dev -p 6006",
+        "storybook:build": "storybook build -o storybook-static"
     },
     "peerDependencies": {
         "@mantine/core": "^9.7.1",
@@ -100,6 +102,8 @@
         "@mantine/hooks": "9.7.1",
         "@mantine/modals": "9.7.1",
         "@mantine/notifications": "9.7.1",
+        "@storybook/addon-docs": "10.6.5",
+        "@storybook/react-vite": "10.6.5",
         "@swc/core": "^1.16.20",
         "@swc/jest": "^0.2.39",
         "@tabler/icons-react": "^3.24.0",
@@ -135,6 +139,7 @@
         "prettier": "^3.4.2",
         "react": "19.2.0",
         "react-dom": "19.2.0",
+        "storybook": "10.6.5",
         "stylelint": "^16.11.0",
         "stylelint-config-standard-scss": "^14.0.0",
         "typescript": "npm:@typescript/typescript6@6.0.2",

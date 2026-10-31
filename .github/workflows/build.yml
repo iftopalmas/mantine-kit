@@ -19,3 +19,4 @@ jobs:
             # Prettier, lint (ESLint + Stylelint), typecheck and tests with a minimum coverage of 80%
             - run: yarn test
             - run: yarn build
+            - run: yarn storybook:build
