@@ -118,3 +118,25 @@ test('shows the empty table and pagination texts in the locale of the app', () =
     expect(screen.getByText('Exibindo 1 a 1 de 1 registros')).toBeInTheDocument();
     expect(screen.getByText('Registros por página')).toBeInTheDocument();
 });
+
+/* The records belong to the app, which may reuse them (e.g. to send them to the API): the table must not change them. */
+test('does not change the given records', () => {
+    const rows: Row[] = [
+        { id: 2, name: 'B' },
+        { id: 1, name: 'A' }
+    ];
+    const copies = rows.map(row => ({ ...row }));
+    render(<ViewTable data={rows} columns={[{ accessor: 'name', title: 'Name' }]} />);
+
+    expect(rows).toEqual(copies);
+    rows.forEach(row => expect(row).not.toHaveProperty('key'));
+});
+
+/* Records not saved yet have no id, so the row key cannot come from it. */
+test('shows records without id, each one in its own row', () => {
+    const rows = [{ name: 'New 1' }, { name: 'New 2' }, { id: 3, name: 'Saved' }];
+    render(<ViewTable data={rows} columns={[{ accessor: 'name', title: 'Name' }]} showIdColumn={false} />);
+
+    // Sorted by id, the records without id come last.
+    expect(screen.getAllByRole('cell').map(cell => cell.textContent)).toEqual(['Saved', 'New 1', 'New 2']);
+});
