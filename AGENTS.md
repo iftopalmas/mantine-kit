@@ -116,8 +116,10 @@ The cost is longer import paths, which the IDE writes automatically (auto import
 ## Publishing
 
 The `.github/workflows/publish.yml` workflow publishes to npm when a tag `vMAJOR.MINOR.PATCH` equal to the `version`
-of `package.json` is pushed (e.g. `v0.1.0`); other tags do not trigger it. Versions with a suffix (e.g. `v0.2.0-beta.1`) are published with the `next`
-dist-tag. Follow [semantic versioning](https://semver.org): a change that breaks the public API (props, file paths,
+of `package.json` is pushed (e.g. `v0.1.0`); other tags do not trigger it. Versions with a suffix (e.g.
+`v0.2.0-beta.1`) are published with the `next` dist-tag. It authenticates with npm trusted publishing (no npm token in
+the repository): the package on npmjs.com trusts the repository, the `publish.yml` file and the `npm` environment, so
+renaming the workflow or the environment requires updating the package settings on npmjs.com. Follow [semantic versioning](https://semver.org): a change that breaks the public API (props, file paths,
 exports) requires a major version (or a minor one, while the version is `0.x`).
 
 ## Development workflow
