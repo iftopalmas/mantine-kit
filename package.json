@@ -34,12 +34,14 @@
         "README.md",
         "LICENSE"
     ],
+    "//exports": "The default condition of \"./*\" is needed by Jest, which resolves packages with the require and default conditions. Without it, deep imports fail with Cannot find module. The import condition only matches tools that load the package as ESM, while default matches any tool when no previous condition matched. It must stay as the last condition.",
     "exports": {
         "./styles.css": "./dist/styles.css",
         "./print.css": "./dist/styles/print.css",
         "./*": {
             "types": "./dist/*.d.ts",
-            "import": "./dist/*.js"
+            "import": "./dist/*.js",
+            "default": "./dist/*.js"
         },
         "./package.json": "./package.json"
     },
