@@ -101,6 +101,18 @@ import { SelectField } from '@ifto/mantine-kit/component/molecule/SelectField/Se
 The path is the one of the file inside `src`, without the extension (see [Components](#components)). There is no
 `index` with everything, so you only bundle what you import.
 
+### Testing with Jest
+
+The library is published only as ESM, and Jest runs the tests in CommonJS, so it has to transform the files of the
+library. Allow them in `transformIgnorePatterns` and keep the transform of your project for `.js` files:
+
+```js
+// jest.config.js
+module.exports = {
+    transformIgnorePatterns: ['/node_modules/(?!@ifto/mantine-kit/)']
+};
+```
+
 ## Examples
 
 ### CRUD list page
