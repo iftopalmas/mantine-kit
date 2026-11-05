@@ -77,6 +77,11 @@ describe('module isolation', () => {
         expect(importersOutside(allowed, specifier => specifier === dependency)).toEqual([]);
     });
 
+    // Day.js is not a peer dependency of the library: it is installed only for @mantine/dates.
+    test('no file imports Day.js', () => {
+        expect(importersOutside([], specifier => specifier.startsWith('dayjs'))).toEqual([]);
+    });
+
     // A static import would put the whole library in the bundle of every page that may show a chart or export a file.
     test.each(['echarts', 'exceljs'])('%s is loaded only on demand (dynamic import)', dependency => {
         const staticImports = runtimeImports().filter(({ specifier, dynamic }) => specifier === dependency && !dynamic);

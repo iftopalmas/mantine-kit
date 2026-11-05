@@ -38,7 +38,7 @@ a REST HTTP client.
 **1. Install** the library and its required peer dependencies:
 
 ```bash
-yarn add @ifto/mantine-kit @mantine/core @mantine/hooks @mantine/notifications @tabler/icons-react clsx dayjs \
+yarn add @ifto/mantine-kit @mantine/core @mantine/hooks @mantine/notifications @tabler/icons-react clsx \
   react react-dom
 ```
 
@@ -48,7 +48,7 @@ Install the optional ones only if you use the components that need them:
 |---|---|
 | `@mantine/form` | the form templates (`FormPage`, `CreateFormPage`, `EditFormPage`) and `DataForm`, which take a `useForm` form |
 | `@mantine/modals` | the confirmations of `Table` (delete), `ListPage` and `DataForm` |
-| `@mantine/dates` | `DateField` |
+| `@mantine/dates` and `dayjs` (its peer dependency) | `DateField` |
 | `mantine-datatable` | `Table`, `ViewTable`, `ListPage` |
 | `echarts` | `EChart` and the chart types |
 | `exceljs` | Excel export |

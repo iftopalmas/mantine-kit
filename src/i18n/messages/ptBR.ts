@@ -1,5 +1,5 @@
-import dayjs from 'dayjs';
-
+import { formatLocaleDate, formatLocaleTime } from '../../util/DateUtil';
+import { LOCALE_PT_BR } from '../KitLocale';
 import { KitMessages } from '../KitMessages';
 
 /** Brazilian Portuguese texts. */
@@ -69,7 +69,8 @@ export const ptBR: KitMessages = {
     export: {
         button: 'Exportar',
         failed: formatLabel => `Não foi possível exportar em ${formatLabel}.`,
-        generatedAt: date => `Gerado em ${dayjs(date).format('DD/MM/YYYY [às] HH:mm')}`,
+        generatedAt: date =>
+            `Gerado em ${formatLocaleDate(date, LOCALE_PT_BR)} às ${formatLocaleTime(date, LOCALE_PT_BR)}`,
         footer: systemName => `Dados gerados pelo ${systemName}`,
         excelPageNumber: 'Página &P de &N',
         invalidCell: 'Erro',

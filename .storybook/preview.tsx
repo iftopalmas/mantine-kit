@@ -5,7 +5,7 @@ import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
 import { ReactElement, ReactNode, useEffect } from 'react';
 
-import { KitLocale } from '../src/i18n/KitLocale';
+import { KitLocale, LOCALE_EN_US, LOCALE_PT_BR } from '../src/i18n/KitLocale';
 import { KitProvider } from '../src/provider/KitProvider';
 
 import '@mantine/core/styles.css';
@@ -45,14 +45,14 @@ const preview: Preview = {
     globalTypes: {
         locale: {
             description: 'Locale of the texts',
-            toolbar: { title: 'Locale', icon: 'globe', items: ['en-US', 'pt-BR'], dynamicTitle: true }
+            toolbar: { title: 'Locale', icon: 'globe', items: [LOCALE_EN_US, LOCALE_PT_BR], dynamicTitle: true }
         },
         colorScheme: {
             description: 'Mantine color scheme',
             toolbar: { title: 'Theme', icon: 'mirror', items: ['light', 'dark'], dynamicTitle: true }
         }
     },
-    initialGlobals: { locale: 'en-US', colorScheme: 'light' },
+    initialGlobals: { locale: LOCALE_EN_US, colorScheme: 'light' },
     parameters: {
         controls: { expanded: true },
         // Links of the stories use the default router, which would leave the Storybook page.

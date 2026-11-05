@@ -4,10 +4,11 @@ import { EChart } from '@/src/component/organism/EChart/EChart';
 import { ChartData } from '@/src/component/organism/EChart/chart/ChartSeries';
 import { CHART_TYPES } from '@/src/component/organism/EChart/chart/ChartTypes';
 import { ChartTypeId } from '@/src/component/organism/EChart/chart/ChartTypeId';
+import { LOCALE_EN_US } from '@/src/i18n/KitLocale';
 import { useKitConfig } from '@/src/provider/useKit';
 
 /** Formats a value as money. */
-const money = { label: '$', format: (value: number) => `$ ${value.toLocaleString('en-US')}` };
+const money = { label: '$', format: (value: number) => `$ ${value.toLocaleString(LOCALE_EN_US)}` };
 
 /** Revenue split by product (a stack), with its total and a percentage series in another unit. */
 const DATA: ChartData = {

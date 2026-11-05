@@ -1,10 +1,13 @@
-import { DEFAULT_LOCALE, KitLocale } from './KitLocale';
+import { DEFAULT_LOCALE, KitLocale, LOCALE_EN_US, LOCALE_PT_BR } from './KitLocale';
 import { KitMessages, KitMessagesOverride } from './KitMessages';
 import { enUS } from './messages/enUS';
 import { ptBR } from './messages/ptBR';
 
 /** Built-in message catalog of each locale. */
-export const KIT_MESSAGES: Readonly<Record<KitLocale, KitMessages>> = { 'pt-BR': ptBR, 'en-US': enUS };
+export const KIT_MESSAGES: Readonly<Record<KitLocale, KitMessages>> = {
+    [LOCALE_PT_BR]: ptBR,
+    [LOCALE_EN_US]: enUS
+};
 
 /** Texts of the {@link DEFAULT_LOCALE}, used as defaults by the code outside React. */
 export const DEFAULT_MESSAGES: KitMessages = KIT_MESSAGES[DEFAULT_LOCALE];
