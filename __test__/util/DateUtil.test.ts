@@ -39,7 +39,7 @@ describe('parseDate', () => {
         expect(parseDate('2026x10x05', 'YYYY.MM.DD')?.getTime()).toBeNaN();
     });
 
-    // Mantine's DateInput gives ISO texts in onChange: DateField has always received them as an Invalid Date.
+    // parseDate only reads the given format: DateField is the one that also reads the ISO texts of Mantine's onChange.
     test.each(['abc', '2026-10-05', '5/1/2026', '31/02/2026', '05/13/2026', '05/10/2026 extra'])(
         'returns an Invalid Date for %s',
         text => {
