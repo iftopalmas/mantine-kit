@@ -52,6 +52,9 @@ provides the compiler API typescript-eslint needs. Remove the alias when typescr
 - **Dependencies**: React, Mantine and related packages are `peerDependencies` (the app installs them). `echarts`,
   `exceljs`, `mantine-datatable`, `axios` and `zod` are optional. ECharts and ExcelJS are loaded on demand (dynamic
   `import()`): never import them statically in runtime code (only `import type`).
+  `src/` formats and parses dates with `Date` and `Intl` only. `dayjs` stays only as a development dependency, because
+  `@mantine/dates` requires it. Temporal can replace `Date` once all target browsers support it natively: its polyfill
+  is much larger than Day.js, and apps that use `DateField` would load both.
 - **CSS**: CSS Modules beside the component, compiled in the build with `postcss-preset-mantine` into a single
   `dist/styles.css`, which the app imports once. `src/styles/print.css` is published separately (`print.css`).
 - **`'use client'`**: the build marks every module as a Client Component (as Mantine does), so Next.js Server
