@@ -1,3 +1,5 @@
+import { IconChartLine, type Icon } from '@tabler/icons-react';
+
 import { ChartTypeId } from './ChartTypeId';
 import { CartesianChart, CartesianSeries } from './CartesianChart';
 
@@ -8,6 +10,11 @@ import { CartesianChart, CartesianSeries } from './CartesianChart';
  */
 export class LineChart extends CartesianChart {
     readonly id: ChartTypeId = 'line';
+
+    /** @param icon icon that replaces the default one */
+    constructor(icon: Icon = IconChartLine) {
+        super(icon);
+    }
 
     protected seriesStyle(): CartesianSeries {
         // connectNulls false: a category without a value is a gap in the line, instead of joining the neighbors.

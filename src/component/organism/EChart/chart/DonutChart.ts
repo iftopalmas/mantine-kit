@@ -1,3 +1,4 @@
+import { IconChartDonut, type Icon } from '@tabler/icons-react';
 import type { EChartsOption } from 'echarts';
 
 import { ChartData, ChartSeries, groupByStack } from './ChartSeries';
@@ -29,6 +30,9 @@ const DONUT_CENTER = ['50%', '58%'];
 export class DonutChart implements ChartType {
     readonly id: ChartTypeId = 'donut';
     readonly singleCategory = true;
+
+    /** @param icon icon that replaces the default one */
+    constructor(readonly icon: Icon = IconChartDonut) {}
 
     isAvailable(series: ChartSeries[]): boolean {
         const stacks = [...groupByStack(series).entries()];
