@@ -25,7 +25,7 @@ const YEAR_MONTH_LENGTH = 7;
 export const MIN_VALID_DATE = new Date('01/01/1970');
 
 /** @return whether there is a date and it is valid: `Intl` throws an error for an Invalid Date */
-function isValidDate(date: Date | undefined | null): date is Date {
+export function isValidDate(date: Date | undefined | null): date is Date {
     return !!date && !Number.isNaN(date.getTime());
 }
 
