@@ -1,3 +1,5 @@
+import { IconChartColumn, type Icon } from '@tabler/icons-react';
+
 import { ChartSeries, groupByStack } from './ChartSeries';
 import { ChartTypeId } from './ChartTypeId';
 import { CartesianChart, CartesianSeries } from './CartesianChart';
@@ -11,6 +13,11 @@ import { CartesianChart, CartesianSeries } from './CartesianChart';
  */
 export class StackedBarChart extends CartesianChart {
     readonly id: ChartTypeId = 'stacked-bar';
+
+    /** @param icon icon that replaces the default one */
+    constructor(icon: Icon = IconChartColumn) {
+        super(icon);
+    }
 
     isAvailable(series: ChartSeries[]): boolean {
         return groupByStack(series).size > 0;

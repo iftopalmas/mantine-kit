@@ -1,3 +1,4 @@
+import type { Icon } from '@tabler/icons-react';
 import type { EChartsOption } from 'echarts';
 
 import { KitLocale } from '../../../../i18n/KitLocale';
@@ -34,6 +35,9 @@ export type ChartContext = {
 
 export interface ChartType {
     readonly id: ChartTypeId;
+
+    /** Icon that represents the type, such as in a chart type selector; absent if the type has none. */
+    readonly icon?: Icon;
 
     /** Whether the type shows a single category (so the screen should show a category selector, such as the year). */
     readonly singleCategory: boolean;

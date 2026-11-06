@@ -1,3 +1,4 @@
+import { Group, Stack, Text } from '@mantine/core';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { EChart } from '@/src/component/organism/EChart/EChart';
@@ -28,6 +29,22 @@ const DATA: ChartData = {
 
 /** Data accepted by the donut: only the stack and its total. */
 const STACK_DATA: ChartData = { ...DATA, series: DATA.series.filter(serie => serie.stack || serie.totalOf) };
+
+/** Icon and name of each chart type, as a chart type selector shows them. */
+function ChartTypeIcons(): React.ReactElement {
+    const { messages } = useKitConfig();
+
+    return (
+        <Stack gap="xs">
+            {CHART_TYPES.map(({ id, icon: TypeIcon }) => (
+                <Group key={id} gap="xs">
+                    {TypeIcon && <TypeIcon />}
+                    <Text>{messages.chart.types[id]}</Text>
+                </Group>
+            ))}
+        </Stack>
+    );
+}
 
 type Props = { type: ChartTypeId };
 
@@ -71,6 +88,9 @@ export const StackedBar: Story = { args: { type: 'stacked-bar' } };
 
 /** How the total of the stack splits in the last year. */
 export const Donut: Story = { args: { type: 'donut' } };
+
+/** The icon of each chart type. To use another one, create the type with it: `new BarChart(IconChartHistogram)`. */
+export const TypeIcons: Story = { render: () => <ChartTypeIcons /> };
 
 /** The `EChart` itself, with a raw ECharts option and the data filled from domain items. */
 export const RawOption: StoryObj<typeof EChart<{ name: string; share: number }>> = {

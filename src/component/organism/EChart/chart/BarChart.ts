@@ -1,3 +1,5 @@
+import { IconChartBar, type Icon } from '@tabler/icons-react';
+
 import { ChartSeries } from './ChartSeries';
 import { ChartTypeId } from './ChartTypeId';
 import { CartesianChart, CartesianSeries, DataPoint } from './CartesianChart';
@@ -13,6 +15,11 @@ export const NEGATIVE_VALUE_COLOR = '#d9480f';
  */
 export class BarChart extends CartesianChart {
     readonly id: ChartTypeId = 'bar';
+
+    /** @param icon icon that replaces the default one */
+    constructor(icon: Icon = IconChartBar) {
+        super(icon);
+    }
 
     protected seriesStyle(): CartesianSeries {
         return { type: 'bar' };

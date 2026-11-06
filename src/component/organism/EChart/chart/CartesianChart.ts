@@ -1,3 +1,4 @@
+import type { Icon } from '@tabler/icons-react';
 import type { BarSeriesOption, EChartsOption, LineSeriesOption } from 'echarts';
 
 import { ChartData, ChartSeries } from './ChartSeries';
@@ -21,6 +22,9 @@ export type DataPoint = number | null | { value: number; itemStyle: { color: str
 export abstract class CartesianChart implements ChartType {
     abstract readonly id: ChartTypeId;
     readonly singleCategory = false;
+
+    /** @param icon icon of the type (see {@link ChartType#icon}) */
+    constructor(readonly icon?: Icon) {}
 
     /** Types with axes work for any set of series, except the ones that restrict it (see the subclasses). */
     isAvailable(series: ChartSeries[]): boolean {

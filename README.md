@@ -226,6 +226,10 @@ The chart types in `component/organism/EChart/chart` (`LINE_CHART`, `BAR_CHART`,
 build a complete option, with one panel per unit, from generic series:
 `option={LINE_CHART.buildOption(data, { title: 'Revenue', locale: 'en-US' })}`.
 
+Each of these types has an `icon`, to show in a chart type selector (e.g. `IconChartBar` for `BAR_CHART`). To use another
+one, create the type with it: `new BarChart(IconChartHistogram)`. The `icon` is optional in the `ChartType` contract, so
+a custom chart type does not need one.
+
 ### Export to Excel or CSV
 
 ```tsx

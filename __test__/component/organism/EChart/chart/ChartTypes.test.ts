@@ -1,4 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
+import { IconStar } from '@tabler/icons-react';
 import type { EChartsOption, SeriesOption } from 'echarts';
 
 import { groupByStack } from '@/src/component/organism/EChart/chart/ChartSeries';
@@ -10,8 +11,10 @@ import {
     LINE_CHART,
     STACKED_BAR_CHART
 } from '@/src/component/organism/EChart/chart/ChartTypes';
-import { NEGATIVE_VALUE_COLOR } from '@/src/component/organism/EChart/chart/BarChart';
-import { DONUT_HEIGHT, shownCategory } from '@/src/component/organism/EChart/chart/DonutChart';
+import { BarChart, NEGATIVE_VALUE_COLOR } from '@/src/component/organism/EChart/chart/BarChart';
+import { DonutChart, DONUT_HEIGHT, shownCategory } from '@/src/component/organism/EChart/chart/DonutChart';
+import { LineChart } from '@/src/component/organism/EChart/chart/LineChart';
+import { StackedBarChart } from '@/src/component/organism/EChart/chart/StackedBarChart';
 import { PANELS_TOP } from '@/src/component/organism/EChart/chart/UnitPanels';
 import { enUS } from '@/src/i18n/messages/enUS';
 import { ptBR } from '@/src/i18n/messages/ptBR';
@@ -139,6 +142,20 @@ describe('ChartTypes', () => {
 
         expect(option.title).toMatchObject({ subtext: 'Total: $ 26' });
         expect(toolbox.feature.saveAsImage.title).toBe('Exportar imagem');
+    });
+
+    test('every chart type has an icon', () => {
+        CHART_TYPES.forEach(type => expect(type.icon).toBeDefined());
+    });
+
+    test('the icon of every chart type can be replaced', () => {
+        const customTypes = [
+            new BarChart(IconStar),
+            new LineChart(IconStar),
+            new StackedBarChart(IconStar),
+            new DonutChart(IconStar)
+        ];
+        customTypes.forEach(type => expect(type.icon).toBe(IconStar));
     });
 
     test('every chart type has a name in each locale', () => {
