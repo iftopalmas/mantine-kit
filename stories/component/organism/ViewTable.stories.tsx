@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { fn } from 'storybook/test';
 
 import ViewTable from '@/src/component/organism/ViewTable/ViewTable';
 import { Region, REGIONS } from '../../fixtures';
@@ -33,3 +34,19 @@ export const WithoutPagination: Story = { args: { data: REGIONS, pagination: fal
 export const Empty: Story = { args: { data: [] } };
 
 export const Loading: Story = { args: { data: [], loading: true } };
+
+/** Pagination and sort kept outside the table (e.g. by a backend): the records are shown as received. */
+export const ExternalState: Story = {
+    args: {
+        data: MANY_REGIONS.slice(10, 20),
+        externalState: {
+            page: 2,
+            pageSize: 10,
+            sortStatus: { columnAccessor: 'id', direction: 'asc' },
+            totalRecords: MANY_REGIONS.length,
+            onPageChange: fn(),
+            onPageSizeChange: fn(),
+            onSortStatusChange: fn()
+        }
+    }
+};
