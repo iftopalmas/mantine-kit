@@ -4,7 +4,9 @@ import { TextInput } from '@mantine/core';
 
 import ListPage from '@/src/component/template/ListPage/ListPage';
 import { ListDataSource } from '@/src/data/ListDataSource';
-import { Region, regionListSource } from '../../fixtures';
+import { Region, regionListSource, regionPageSource } from '../../fixtures';
+
+const pagedRegions = regionPageSource();
 
 const meta = {
     title: 'Templates/ListPage',
@@ -30,4 +32,9 @@ export const Default: StoryObj<typeof meta> = {};
 /** Extra content above the table, such as filters. */
 export const WithFilters: StoryObj<typeof meta> = {
     args: { children: <TextInput label="Name" placeholder="Filter by name" w={280} /> }
+};
+
+/** The backend sorts and paginates: the table fetches one page at a time with `fetchPage`. */
+export const ServerSidePagination: StoryObj<typeof meta> = {
+    args: { service: pagedRegions, fetchPage: pagedRegions.fetchPage }
 };

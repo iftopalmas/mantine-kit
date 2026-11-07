@@ -3,7 +3,9 @@ import { fn } from 'storybook/test';
 
 import Table from '@/src/component/organism/Table/Table';
 import { ListDataSource } from '@/src/data/ListDataSource';
-import { Region, regionListSource } from '../../fixtures';
+import { Region, regionListSource, regionPageSource } from '../../fixtures';
+
+const pagedRegions = regionPageSource();
 
 const meta = {
     title: 'Organisms/Table',
@@ -32,4 +34,9 @@ export const OnlyView: Story = { args: { actionsSettings: { canEdit: false, canD
 
 export const LoadError: Story = {
     args: { customFetchMethod: () => Promise.reject(new Error('Request failed with status code 500')) }
+};
+
+/** The backend sorts and paginates: the table fetches one page at a time with `fetchPage`. */
+export const ServerSidePagination: Story = {
+    args: { service: pagedRegions, fetchPage: pagedRegions.fetchPage }
 };

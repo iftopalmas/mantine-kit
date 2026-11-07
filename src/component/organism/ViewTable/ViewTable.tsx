@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-
 import {
     DataTable,
     DataTableColumn,
@@ -12,20 +10,10 @@ import {
 
 import { Identifiable } from '../../../model/Identifiable';
 import { useKitConfig } from '../../../provider/useKit';
-import { columnComparator, Comparator } from './ColumnComparator';
+import { Comparator } from './ColumnComparator';
+import { PAGE_SIZES, TableState } from './TableState';
+import { useClientTableState } from './useClientTableState';
 import { useRowKey } from './useRowKey';
-
-/** Options of records per page. The largest one lets long tables (and end-to-end tests) show every row in one page. */
-const PAGE_SIZES = [10, 20, 50, 200];
-
-/** Default sort when neither `defaultSortStatus` nor `compare` is given. */
-const DEFAULT_SORT_STATUS = { columnAccessor: 'id', direction: 'asc' } as const;
-
-/**
- * Sort used while the `compare` function applies, when `defaultSortStatus` is not given: it matches no column, so no
- * header shows the sort indicator, and the first click on any column sorts it in ascending order.
- */
-const NO_COLUMN_SORT_STATUS = { columnAccessor: '', direction: 'asc' } as const;
 
 /** Function that defines extra attributes (e.g. aria-label) for each pagination control button. */
 type PaginationControlPropsGetter = Extract<DataTablePaginationProps, { page: number }>['getPaginationControlProps'];
@@ -72,6 +60,11 @@ type TableProps<M extends Identifiable> = {
      * header of a column, the sort of the column applies.
      */
     compare?: Comparator<M>;
+    /**
+     * Pagination and sort kept outside the table (e.g. by a backend that paginates). When given, `data` is shown as
+     * received, always with the pagination controls, and `pagination`, `defaultSortStatus` and `compare` do not apply.
+     */
+    externalState?: TableState<M>;
     /** Extra attributes for the pagination control buttons. It only has effect when `pagination` is true. */
     getPaginationControlProps?: PaginationControlPropsGetter;
 } & DataTablePassThroughProps<M>;
@@ -85,6 +78,7 @@ type TableProps<M extends Identifiable> = {
  * @param pagination Indicates whether to show pagination or not.
  * @param getPaginationControlProps extra attributes for the pagination control buttons
  * @param compare comparison function of the initial order, replaced by the sort of the column chosen in the header
+ * @param externalState pagination and sort kept outside the table, which then shows `data` as received
  * @param rest remaining props, passed to the DataTable
  * @return the table with the data, sortable and (optionally) paginated
  */
@@ -96,42 +90,17 @@ const ViewTable = <M extends Identifiable>({
     showIdColumn = true,
     defaultSortStatus,
     compare,
+    externalState,
     getPaginationControlProps,
     ...rest
 }: TableProps<M>) => {
     const { locale, messages } = useKitConfig();
-    const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
-    const [sortStatus, setSortStatus] = useState<DataTableSortStatus<M>>(
-        defaultSortStatus ?? (compare ? NO_COLUMN_SORT_STATUS : DEFAULT_SORT_STATUS)
-    );
-    // The `compare` function applies until the user chooses a column in the header.
-    const [compareActive, setCompareActive] = useState(compare !== undefined);
-
-    /*
-     * Sorts all records before cutting the page, so each page (including in descending order) shows its part of the
-     * whole set. The copy keeps the order of the given array. It is separate from the page cut, so not everything is
-     * sorted again on every change of page or page size.
-     */
-    const sortedData = useMemo(() => {
-        const comparator = compareActive && compare ? compare : columnComparator(sortStatus, locale);
-
-        return [...data].sort(comparator);
-    }, [data, sortStatus, compareActive, compare, locale]);
-
-    // Without pagination, shows all records (e.g. a printed report), not only the ones of the first page.
-    const records = useMemo(() => {
-        if (!pagination) return sortedData;
-
-        const from = (page - 1) * pageSize;
-        return sortedData.slice(from, from + pageSize);
-    }, [sortedData, pagination, page, pageSize]);
+    // Hooks cannot be conditional: with an external state, the result of this one is just ignored.
+    const clientState = useClientTableState({ data, pagination, locale, defaultSortStatus, compare });
+    const state = externalState ?? clientState;
+    const records = externalState ? data : clientState.records;
+    const paginated = externalState !== undefined || pagination;
     const rowKey = useRowKey<M>();
-
-    function changeSortStatus(status: DataTableSortStatus<M>): void {
-        setCompareActive(false);
-        setSortStatus(status);
-    }
 
     const effectiveColumns: DataTableColumn<M>[] = [
         {
@@ -144,27 +113,16 @@ const ViewTable = <M extends Identifiable>({
         ...columns
     ];
 
-    useEffect(() => {
-        setPage(1);
-    }, [pageSize]);
-
-    /* If the data shrinks, goes back to the last existing page. The functional update avoids using an outdated `page`
-       when the effect above has just gone back to page 1. */
-    useEffect(() => {
-        const totalPages = Math.ceil(data.length / pageSize);
-        setPage(currentPage => (totalPages && currentPage > totalPages ? totalPages : currentPage));
-    }, [data.length, pageSize]);
-
     /* Typed only with the pagination props (and not as Partial<DataTableProps>) to not exhaust the memory of tsc.
        See the comment of DataTablePassThroughProps. */
-    const paginationProps: DataTablePaginationProps = pagination
+    const paginationProps: DataTablePaginationProps = paginated
         ? {
-              page,
-              onPageChange: p => setPage(p),
-              totalRecords: data.length,
-              recordsPerPage: pageSize,
+              page: state.page,
+              onPageChange: state.onPageChange,
+              totalRecords: state.totalRecords,
+              recordsPerPage: state.pageSize,
               recordsPerPageOptions: PAGE_SIZES,
-              onRecordsPerPageChange: setPageSize,
+              onRecordsPerPageChange: state.onPageSizeChange,
               recordsPerPageLabel: messages.table.recordsPerPage,
               paginationText: messages.table.pagination,
               getPaginationControlProps
@@ -182,8 +140,8 @@ const ViewTable = <M extends Identifiable>({
             idAccessor={rowKey}
             noRecordsText={messages.table.noRecords}
             fetching={loading}
-            sortStatus={sortStatus}
-            onSortStatusChange={changeSortStatus}
+            sortStatus={state.sortStatus}
+            onSortStatusChange={state.onSortStatusChange}
             customRowAttributes={record => ({ 'data-testid': `row-${record.id}` })}
             {...paginationProps}
             {...rest}

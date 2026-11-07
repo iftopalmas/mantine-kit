@@ -9,9 +9,9 @@ import { useDocumentTitle, useKitMessages } from '../../../provider/useKit';
 import { BreadcrumbItem } from '../../molecule/Breadcrumb/Breadcrumb';
 import PaperCard from '../../molecule/PaperCard/PaperCard';
 import PageHeader from '../../organism/PageHeader/PageHeader';
-import Table, { ActionsSettings } from '../../organism/Table/Table';
+import Table, { ActionsSettings, TableFetchProps } from '../../organism/Table/Table';
 
-interface ListPageProps<T, S> {
+interface ListPageBaseProps<T, S> {
     /** Title of the page (e.g. "Regions"). */
     title: string;
 
@@ -32,11 +32,13 @@ interface ListPageProps<T, S> {
 
     /** Extra content above the table (e.g. filters). */
     children?: ReactNode;
-    customFetchMethod?: () => Promise<T[]>;
 
     /** Builds the URL opened to view a record. If absent, the default view route is used. */
     getViewUrl?: (item: T) => string;
 }
+
+/** Props of the {@link ListPage}. */
+type ListPageProps<T, S> = ListPageBaseProps<T, S> & TableFetchProps<T>;
 
 /**
  * List page of records: header with the "Add" button, optional extra content (e.g. filters) and the table of the
@@ -53,9 +55,11 @@ function ListPage<M extends Identifiable, S extends ListDataSource<M>>(props: Li
         resourceBasePath,
         actionsSettings,
         children,
-        customFetchMethod,
         getViewUrl
     } = props;
+    const fetchProps = props.fetchPage
+        ? { fetchPage: props.fetchPage }
+        : { customFetchMethod: props.customFetchMethod };
     const documentTitle = useDocumentTitle(title);
     const messages = useKitMessages();
 
@@ -75,7 +79,7 @@ function ListPage<M extends Identifiable, S extends ListDataSource<M>>(props: Li
                         service={service}
                         basePath={resourceBasePath}
                         columns={tableColumns}
-                        customFetchMethod={customFetchMethod}
+                        {...fetchProps}
                         actionsSettings={actionsSettings}
                         getViewUrl={getViewUrl}
                     />

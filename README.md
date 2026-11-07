@@ -146,6 +146,54 @@ export function RegionsPage() {
 }
 ```
 
+#### Server-side pagination
+
+By default, `findAll` returns all records and the browser sorts and paginates them. For an API that paginates, also give
+`fetchPage`, which `ListPage` and `Table` call with the page (starting at 1), the size and the sort. It returns the
+records of that page and the total of records. The contract knows nothing about your backend, so convert it to the format
+of your API (here, the 0-based page of Spring):
+
+```tsx
+import { useCallback } from 'react';
+import type { FetchPage } from '@ifto/mantine-kit/data/PageRequest';
+
+export function RegionsPage({ name }: { name: string }) {
+    // A new function means the filter changed, which goes back to page 1, so keep it stable with useCallback.
+    const fetchPage: FetchPage<Region> = useCallback(
+        async ({ page, size, sort }) => {
+            const params = new URLSearchParams({
+                name,
+                page: String(page - 1),
+                size: String(size),
+                sort: `${String(sort.columnAccessor)},${sort.direction}`
+            });
+            const response = await fetch(`/api/region?${params}`).then(result => result.json());
+
+            return { records: response.content, totalRecords: response.totalElements };
+        },
+        [name]
+    );
+
+    return <ListPage {...listPageProps} fetchPage={fetchPage} />;
+}
+```
+
+| | Client mode (default) | Server mode |
+|---|---|---|
+| **How to enable** | nothing to pass | `fetchPage={...}` (not along with `customFetchMethod`) |
+| **Fetch** | `service.findAll()` or `customFetchMethod`, with all records | one page, with page, size and sort |
+| **Sorted and paginated by** | browser | backend |
+| **Total of records** | `data.length` | `totalRecords` of the response |
+
+In server mode:
+
+- `sort.columnAccessor` holds the `sortKey` of the column, if it has one, or else its `accessor`. A calculated column
+  needs a `sortKey` or `sortable: false`.
+- The table goes back to page 1 when the page size, the sort or the filter changes, and to the last existing page when
+  the current one no longer exists (e.g. its last record was deleted).
+- The order of null values and the text collation are defined by the backend, so they can differ from client mode, which
+  follows the locale and always puts null values last.
+
 ### CRUD form page
 
 `FormPage` creates, edits or views a record and saves it with any object that has a `save(id, data)` method:
