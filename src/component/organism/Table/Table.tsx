@@ -1,11 +1,12 @@
 'use client';
 
-import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
+import { ReactElement, useMemo } from 'react';
 
 import { Box } from '@mantine/core';
 import { DataTableColumn } from 'mantine-datatable';
 
-import ViewTable from '../ViewTable/ViewTable';
+import DataTableView from '../ViewTable/DataTableView';
+import { SetRecords, TableData } from './TableData';
 import RowActions from './RowActions';
 import { ListDataSource } from '../../../data/ListDataSource';
 import { KitMessages } from '../../../i18n/KitMessages';
@@ -13,7 +14,6 @@ import { Identifiable } from '../../../model/Identifiable';
 import { useKitConfig } from '../../../provider/useKit';
 import { FormRouteSegments } from '../../../router/FormRouteSegments';
 import ErrorAlert from '../../atom/ErrorAlert/ErrorAlert';
-import useService from '../../../hook/useService';
 import { showErrorNotification, showSuccessNotification } from '../../../util/Notifications';
 
 /*
@@ -22,9 +22,6 @@ zebra stripes (gray-0), so the highlight went unnoticed. The light variant of th
 dark color schemes.
 */
 const ROW_HOVER_COLOR = 'var(--mantine-primary-color-light)';
-
-/** Initial records of the table, while they are fetched; a single constant, so it is stable across renders. */
-const NO_RECORDS: readonly Identifiable[] = [];
 
 /** Which actions the table shows for each record. */
 export type ActionsSettings = {
@@ -51,14 +48,14 @@ const DEFAULT_ACTIONS_SETTINGS: ActionsSettings = {
 
 /** Props of the {@link Table}. */
 type TableProps<M extends Identifiable, S extends ListDataSource<M>> = {
-    /** Source of the records and of their deletion (e.g. a service that accesses an API). */
-    service: S;
-
     /**
-     * Fetches the records shown, instead of `service.findAll()`. To show data already available, use
-     * `() => Promise.resolve(data)`.
+     * Records and their pagination and sort, given by `useClientPagination` (sorted and paginated in the browser) or
+     * `useServerPagination` (sorted and paginated by the backend).
      */
-    customFetchMethod?: () => Promise<M[]>;
+    data: TableData<M>;
+
+    /** Source of the records, which deletes them (e.g. a service that accesses an API). */
+    service: S;
 
     /** Columns of the table. */
     columns: DataTableColumn<M>[];
@@ -68,9 +65,6 @@ type TableProps<M extends Identifiable, S extends ListDataSource<M>> = {
 
     /** Which actions are shown; the ones not given are shown. */
     actionsSettings?: Partial<ActionsSettings>;
-
-    /** Whether the table is paginated. */
-    pagination?: boolean;
 
     /**
      * Called by the edit action instead of opening the edit page of the record.
@@ -101,16 +95,16 @@ function viewUrl<M extends Identifiable, S extends ListDataSource<M>>(
 
 /**
  * Creates the function that deletes a record and reloads the table.
- * @param setData function that sets the records of the table, obtained from `useState`
+ * @param setData function that sets the records of the table
  * @param service source of the records, which deletes them
- * @param fetchMethod fetches the records again after the deletion
+ * @param reload fetches the records again after the deletion
  * @param messages texts of the locale
  * @return a function that receives the record to delete and returns a promise resolved when it is deleted
  */
 function getDeleteRecordFn<M extends Identifiable, S extends ListDataSource<M>>(
-    setData: (value: ((prevState: M[]) => M[]) | M[]) => void,
+    setData: SetRecords<M>,
     service: S,
-    fetchMethod: () => Promise<M[]>,
+    reload: () => Promise<void>,
     messages: KitMessages
 ): (item: M) => Promise<void> {
     return async (item: M) => {
@@ -125,7 +119,7 @@ function getDeleteRecordFn<M extends Identifiable, S extends ListDataSource<M>>(
         try {
             await service.delete(id);
             showSuccessNotification(messages.table.deleteSuccess, messages.common.success);
-            setData(await fetchMethod());
+            await reload();
         } catch (e) {
             showErrorNotification(e, undefined, messages.common.error);
         }
@@ -133,29 +127,22 @@ function getDeleteRecordFn<M extends Identifiable, S extends ListDataSource<M>>(
 }
 
 /**
- * A table that shows the records of a data source, with the view, edit and delete actions. Clicking a row opens the
- * record.
+ * A table that shows the records of a data source, with the view, edit and delete actions, or an alert when they cannot
+ * be fetched. Clicking a row opens the record. Its `data` comes from `useClientPagination` or `useServerPagination`,
+ * which define where the records are sorted and paginated.
  * @template M type of the records, shown one per row
  * @template S source of the records (e.g. a service that accesses an API)
  */
 const Table = <M extends Identifiable, S extends ListDataSource<M>>(props: TableProps<M, S>): ReactElement => {
-    const { customFetchMethod, service, columns, basePath, customEditFunction } = props;
-    const fetchMethod = useCallback(
-        () => (customFetchMethod ? customFetchMethod() : service.findAll()),
-        [customFetchMethod, service]
-    );
+    const { service, columns, basePath, customEditFunction, data } = props;
+    const { setRecords, reload } = data;
     const { router, messages, formRouteSegments } = useKitConfig();
     const navigate = router.useNavigate();
     const settings: ActionsSettings = { ...DEFAULT_ACTIONS_SETTINGS, ...props.actionsSettings };
 
-    const { data: fetchedData, loading, error } = useService(fetchMethod, NO_RECORDS as M[]);
-    const [data, setData] = useState<M[]>([]);
-
-    useEffect(() => setData(fetchedData), [fetchedData]);
-
     const deleteRecord = useMemo(
-        () => getDeleteRecordFn(setData, service, fetchMethod, messages),
-        [service, fetchMethod, messages]
+        () => getDeleteRecordFn(setRecords, service, reload, messages),
+        [setRecords, service, reload, messages]
     );
 
     const actionsColumn: DataTableColumn<M> = {
@@ -174,16 +161,17 @@ const Table = <M extends Identifiable, S extends ListDataSource<M>>(props: Table
     };
     const effectiveColumns = settings.canShowActions ? [...columns, actionsColumn] : columns;
 
-    if (error) {
-        return <ErrorAlert title={messages.common.loadError} message={String(error)} />;
+    if (data.error) {
+        return <ErrorAlert title={messages.common.loadError} message={String(data.error)} />;
     }
 
     return (
-        <ViewTable
-            data={data}
+        <DataTableView
+            records={data.records}
+            state={data.tableState}
+            paginated={data.paginated}
             columns={effectiveColumns}
-            loading={loading}
-            pagination={props.pagination}
+            loading={data.loading}
             // Highlights the row under the mouse, to show that clicking it opens the record, as the view icon does.
             highlightOnHover
             highlightOnHoverColor={ROW_HOVER_COLOR}

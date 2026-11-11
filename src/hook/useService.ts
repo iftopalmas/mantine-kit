@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 
 /** Values returned by {@link useService}. */
 export type UseService<D> = {
-    /** Data of the fetch, or the initial value while it has not finished (or if it failed). */
+    /** Data of the last successful fetch, or the initial value if none has finished yet. */
     data: D;
 
-    /** Error of the fetch; `null` if it has not finished yet or succeeded. */
+    /** Error of the current fetch; `null` if it has not finished yet or succeeded. */
     error: unknown | null;
 
-    /** Whether the fetch has not finished yet. */
+    /** Whether the current fetch has not finished yet. */
     loading: boolean;
 };
 
@@ -40,6 +40,8 @@ function useService<T>(fetchMethod: () => Promise<T>, initialData?: T): UseServi
         /* When fetchMethod changes (e.g. another filter), the previous fetch becomes obsolete. If its response arrives
            after the one of the new fetch, it cannot overwrite the current data. */
         let obsolete = false;
+        setLoading(true);
+        setError(null);
         fetchMethod()
             .then(responseData => !obsolete && setData(responseData))
             .catch(e => !obsolete && setError(e))

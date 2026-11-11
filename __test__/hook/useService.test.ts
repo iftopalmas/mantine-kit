@@ -56,4 +56,35 @@ describe('useService', () => {
 
         expect(result.current.data).toBe('latest');
     });
+
+    // Without it, changing the page of a table paginated by the backend would show no spinner.
+    test('loads again on a new fetch, keeping the data until the response', async () => {
+        const next = pending();
+        const { result, rerender } = renderHook(({ fetch }) => useService(fetch), {
+            initialProps: { fetch: () => Promise.resolve('first') }
+        });
+        await waitFor(() => expect(result.current.data).toBe('first'));
+
+        rerender({ fetch: () => next.promise });
+
+        expect(result.current).toEqual({ data: 'first', error: null, loading: true });
+        await act(async () => next.resolve('second'));
+        expect(result.current).toEqual({ data: 'second', error: null, loading: false });
+    });
+
+    // Without it, one failed fetch would leave the table stuck on the error alert.
+    test('clears the error on a new fetch', async () => {
+        const next = pending();
+        const { result, rerender } = renderHook(({ fetch }) => useService(fetch), {
+            initialProps: { fetch: () => Promise.reject<string>(new Error('HTTP 500')) }
+        });
+        await waitFor(() => expect(result.current.error).not.toBeNull());
+
+        rerender({ fetch: () => next.promise });
+
+        expect(result.current.error).toBeNull();
+        expect(result.current.loading).toBe(true);
+        await act(async () => next.resolve('data'));
+        expect(result.current).toEqual({ data: 'data', error: null, loading: false });
+    });
 });
