@@ -1,9 +1,10 @@
 import { ComponentProps, ReactElement } from 'react';
 
 import Table from '@/src/component/organism/Table/Table';
-import { useClientPagination } from '@/src/component/organism/Table/useClientPagination';
+import { FetchAll, useClientPagination } from '@/src/component/organism/Table/useClientPagination';
 import { useServerPagination } from '@/src/component/organism/Table/useServerPagination';
 import { ListDataSource } from '@/src/data/ListDataSource';
+import { PageDataSource } from '@/src/data/PageDataSource';
 import { FetchPage } from '@/src/data/PageRequest';
 import { Region } from './fixtures';
 
@@ -17,21 +18,21 @@ export type RegionTableProps = Omit<ComponentProps<typeof Table<Region, ListData
 
 /** Table of regions sorted and paginated in the browser. */
 export function ClientRegionTable({
-    fetchAll,
+    source,
     pagination,
     ...props
-}: RegionTableProps & { fetchAll: () => Promise<Region[]>; pagination?: boolean }): ReactElement {
-    const data = useClientPagination(fetchAll, { pagination });
+}: RegionTableProps & { source: ListDataSource<Region> | FetchAll<Region>; pagination?: boolean }): ReactElement {
+    const data = useClientPagination(source, { pagination });
 
     return <Table {...props} data={data} />;
 }
 
 /** Table of regions sorted and paginated by the (simulated) backend. */
 export function ServerRegionTable({
-    fetchPage,
+    source,
     ...props
-}: RegionTableProps & { fetchPage: FetchPage<Region> }): ReactElement {
-    const data = useServerPagination(fetchPage);
+}: RegionTableProps & { source: PageDataSource<Region> | FetchPage<Region> }): ReactElement {
+    const data = useServerPagination(source);
 
     return <Table {...props} data={data} />;
 }

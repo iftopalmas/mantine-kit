@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { TableData } from './TableData';
 import { DEFAULT_SORT_STATUS, FIRST_PAGE, PAGE_SIZES } from '../ViewTable/TableState';
+import { PageDataSource } from '../../../data/PageDataSource';
 import { FetchPage, PageRequest, PageResult } from '../../../data/PageRequest';
 import useService from '../../../hook/useService';
 
@@ -12,7 +13,7 @@ const NO_PAGE: PageResult<never> = { records: [], totalRecords: 0 };
 export type ServerPaginationOptions = {
     /**
      * Number of the first page in the requests to the backend (e.g. 0 for Spring Data); defaults to 1. It only changes
-     * the `page` sent to `fetchPage`: the table always shows the pages starting at 1.
+     * the `page` sent to the backend: the table always shows the pages starting at 1.
      */
     firstPage?: number;
 };
@@ -38,15 +39,22 @@ function toBackendRequest<M>(request: PageRequest<M>, firstPage: number): PageRe
  * when the page size, the sort or the filter changes, and to the last existing page when the current one no longer
  * exists (e.g. its last record was deleted).
  * @template M type of the records
- * @param fetchPage fetches a page. A new function means that the filter changed, so it goes back to page 1; keep it
- *        stable otherwise (e.g. with `useCallback`)
+ * @param source an object whose `findPage` fetches a page (e.g. a service), or a function that fetches it (e.g. with a
+ *        filter). A new object or function means that the filter changed, so it goes back to page 1 and fetches again.
+ *        Keep it stable otherwise (e.g. a module constant, or a function created with `useCallback`): a
+ *        `new Service()` inside the component would fetch on every render
  * @param options number of the first page for the backend
  * @return the data to give to the `data` prop of the {@link Table}
  */
 export function useServerPagination<M>(
-    fetchPage: FetchPage<M>,
+    source: PageDataSource<M> | FetchPage<M>,
     { firstPage = FIRST_PAGE }: ServerPaginationOptions = {}
 ): TableData<M> {
+    // Calls the method on the object, so it keeps its `this`.
+    const fetchPage = useMemo<FetchPage<M>>(
+        () => (typeof source === 'function' ? source : request => source.findPage(request)),
+        [source]
+    );
     // A single object, so a copy of it fetches the same page again, and a change is always a single fetch.
     const [request, setRequest] = useState<PageRequest<M>>({
         page: FIRST_PAGE,

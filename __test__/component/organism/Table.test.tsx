@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { ComponentProps, ReactElement } from 'react';
 
 import Table from '@/src/component/organism/Table/Table';
-import { useClientPagination } from '@/src/component/organism/Table/useClientPagination';
+import { FetchAll, useClientPagination } from '@/src/component/organism/Table/useClientPagination';
 import type { ListDataSource } from '@/src/data/ListDataSource';
 import type { Identifiable } from '@/src/model/Identifiable';
 import { KitProvider } from '@/src/provider/KitProvider';
@@ -27,7 +27,7 @@ function RowTable({
     fetchAll,
     ...props
 }: Omit<ComponentProps<typeof Table<Row, ListDataSource<Row>>>, 'data'> & {
-    fetchAll: () => Promise<Row[]>;
+    fetchAll: Pick<ListDataSource<Row>, 'findAll'> | FetchAll<Row>;
 }): ReactElement {
     return <Table {...props} data={useClientPagination(fetchAll)} />;
 }
@@ -172,4 +172,38 @@ test('shows an alert when the data cannot be loaded', async () => {
 
     expect(await screen.findByText('Error loading data')).toBeInTheDocument();
     expect(screen.getByText('Error: HTTP 500')).toBeInTheDocument();
+});
+
+/** Service whose method reads a field, so it fails if the hook calls it without its `this`. */
+class RowService {
+    readonly rows = rows;
+
+    findAll = jest.fn(function (this: RowService) {
+        return Promise.resolve(this.rows);
+    });
+}
+
+test('fetches the records once from a stable data source object, keeping the this of its method', async () => {
+    const rowService = new RowService();
+    const { rerender } = render(
+        <RowTable
+            service={service}
+            fetchAll={rowService}
+            columns={[{ accessor: 'name', title: 'Name' }]}
+            basePath="/region"
+        />,
+        { router }
+    );
+    await screen.findByRole('cell', { name: 'North' });
+
+    rerender(
+        <RowTable
+            service={service}
+            fetchAll={rowService}
+            columns={[{ accessor: 'name', title: 'Name' }]}
+            basePath="/region"
+        />
+    );
+
+    expect(rowService.findAll).toHaveBeenCalledTimes(1);
 });

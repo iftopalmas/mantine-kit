@@ -1,5 +1,5 @@
 import { ListDataSource } from '@/src/data/ListDataSource';
-import { FetchPage } from '@/src/data/PageRequest';
+import { PageDataSource } from '@/src/data/PageDataSource';
 import { SaveDataSource } from '@/src/data/SaveDataSource';
 
 /**
@@ -47,9 +47,9 @@ const PAGED_REGIONS_COUNT = 42;
 
 /**
  * Source of regions that paginates and sorts them as a backend would, so the table only ever receives one page. It
- * also deletes, so the same object is the `service` and gives the `fetchPage` of a table.
+ * also deletes, so the same object is the `service` and the `source` of `useServerPagination`.
  */
-export function regionPageSource(): ListDataSource<Region> & { fetchPage: FetchPage<Region> } {
+export function regionPageSource(): ListDataSource<Region> & PageDataSource<Region> {
     let regions: Region[] = Array.from({ length: PAGED_REGIONS_COUNT }, (_, i) => ({
         id: i + 1,
         name: `Region ${i + 1}`,
@@ -62,7 +62,7 @@ export function regionPageSource(): ListDataSource<Region> & { fetchPage: FetchP
             regions = regions.filter(region => region.id !== Number(id));
             await respond(undefined);
         },
-        fetchPage: ({ page, size, sort }) => {
+        findPage: ({ page, size, sort }) => {
             const key = sort.columnAccessor as keyof Region;
             const direction = sort.direction === 'asc' ? 1 : -1;
             const sorted = [...regions].sort(

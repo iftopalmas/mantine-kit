@@ -33,8 +33,8 @@ export type PageResult<M> = {
 };
 
 /**
- * Fetches a page of records. It must be stable (e.g. with `useCallback`), since a new function means that the filter
- * changed, so the table fetches again from page 1.
+ * Fetches a page of records, as the `findPage` of a `PageDataSource`. It must be stable (e.g. with `useCallback`),
+ * since a new function means that the filter changed, so the table fetches again from page 1.
  * @template M type of the records
  */
 export type FetchPage<M> = (request: PageRequest<M>) => Promise<PageResult<M>>;
