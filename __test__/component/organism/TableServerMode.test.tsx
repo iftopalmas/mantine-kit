@@ -7,7 +7,8 @@ import { ReactElement } from 'react';
 import Table from '@/src/component/organism/Table/Table';
 import { useServerPagination } from '@/src/component/organism/Table/useServerPagination';
 import type { ListDataSource } from '@/src/data/ListDataSource';
-import type { FetchPage, PageRequest } from '@/src/data/PageRequest';
+import type { PageDataSource } from '@/src/data/PageDataSource';
+import type { FetchPage, PageRequest, PageResult } from '@/src/data/PageRequest';
 import type { Identifiable } from '@/src/model/Identifiable';
 import { render } from '@/test-utils';
 
@@ -27,7 +28,7 @@ function ServerTable({
     service,
     firstPage
 }: {
-    fetchPage: FetchPage<Row>;
+    fetchPage: PageDataSource<Row> | FetchPage<Row>;
     service: ListDataSource<Row>;
     firstPage?: number;
 }): ReactElement {
@@ -214,4 +215,24 @@ test('sends the pages starting at firstPage, while showing them starting at 1', 
 
     await screen.findByRole('cell', { name: 'Item 21' });
     expect(fetchPage.mock.calls.map(([request]) => request.page)).toEqual([0, 2]);
+});
+
+/** Service whose method reads a field, so it fails if the hook calls it without its `this`. */
+class PageService implements PageDataSource<Row> {
+    readonly backend = createBackend(25);
+
+    findPage = jest.fn(function (this: PageService, request: PageRequest<Row>): Promise<PageResult<Row>> {
+        return this.backend.fetchPage(request);
+    });
+}
+
+test('fetches the page once from a stable data source object, keeping the this of its method', async () => {
+    const pageService = new PageService();
+    const { rerender } = render(<ServerTable service={pageService.backend.service} fetchPage={pageService} />);
+    await screen.findByRole('cell', { name: 'Item 1' });
+
+    rerender(<ServerTable service={pageService.backend.service} fetchPage={pageService} />);
+
+    expect(pageService.findPage).toHaveBeenCalledTimes(1);
+    expect(pageService.findPage).toHaveBeenCalledWith(expect.objectContaining({ page: 1, size: PAGE_SIZE }));
 });

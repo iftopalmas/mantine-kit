@@ -134,8 +134,8 @@ const regions: ListDataSource<Region> = {
 };
 
 export function RegionsPage() {
-    // The function must be stable (here, a method of a module constant), since a new one fetches again.
-    const data = useClientPagination(regions.findAll);
+    // The object must be stable (here, a module constant), since a new one fetches again.
+    const data = useClientPagination(regions);
 
     return (
         <ListPage
@@ -159,15 +159,23 @@ export function RegionsPage() {
 
 The hook that creates the `data` of the `Table` defines where the records are sorted and paginated:
 
-| | `useClientPagination(fetchAll, { pagination })` | `useServerPagination(fetchPage)` |
+| | `useClientPagination(source, { pagination })` | `useServerPagination(source, { firstPage })` |
 |---|---|---|
 | **Fetch** | all records at once | one page, with page, size and sort |
 | **Sorted and paginated by** | browser (sorting follows the locale) | backend |
 | **Total of records** | number of fetched records | `totalRecords` of the response |
 
-Both take a function that must be stable (e.g. with `useCallback`), as a new one fetches again.
+Both take a `source`, which is either:
 
-`fetchPage` receives the page, the size and the sort, and returns the records of that page and the total of records. The
+- an object with the method that fetches the records: `findAll()` (a `ListDataSource`) or `findPage(request)` (a
+  `PageDataSource`), such as a service. The hook calls the method on the object, so it keeps its `this`;
+- or a function that fetches them, for fetches with a filter (e.g. `useCallback(request => service.findPageByYear(year,
+  request), [year])`).
+
+The source must be stable (e.g. a module constant, or a function created with `useCallback`), since a new one fetches
+again: a `new Service()` inside the component would fetch on every render.
+
+`findPage` (or the function) receives the page, the size and the sort, and returns the records of that page and the total of records. The
 contract knows nothing about your backend, so convert it to the format of your API (here, Spring Data, returning a
 `PagedModel`, which puts the total of records in `page.totalElements`). The page starts at 1, or at the `firstPage`
 option (e.g. 0 for Spring), which only changes the requests: the table always shows the pages starting at 1.

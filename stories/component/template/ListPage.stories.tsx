@@ -17,14 +17,7 @@ const meta = {
         titlePlural: 'Regions',
         breadcrumbItems: [{ title: 'Regions', href: '#' }],
         addActionRoute: '/region/create',
-        children: (
-            <ClientRegionTable
-                service={regions}
-                fetchAll={regions.findAll}
-                basePath="/region"
-                columns={REGION_COLUMNS}
-            />
-        )
+        children: <ClientRegionTable service={regions} source={regions} basePath="/region" columns={REGION_COLUMNS} />
     }
 } satisfies Meta<typeof ListPage>;
 
@@ -43,7 +36,7 @@ export const ServerSidePagination: StoryObj<typeof meta> = {
         children: (
             <ServerRegionTable
                 service={pagedRegions}
-                fetchPage={pagedRegions.fetchPage}
+                source={pagedRegions}
                 basePath="/region"
                 columns={REGION_COLUMNS}
             />
