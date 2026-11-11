@@ -1,4 +1,5 @@
 import { ListDataSource } from '@/src/data/ListDataSource';
+import { FetchPage } from '@/src/data/PageRequest';
 import { SaveDataSource } from '@/src/data/SaveDataSource';
 
 /**
@@ -37,6 +38,39 @@ export function regionListSource(): ListDataSource<Region> {
         delete: async id => {
             regions = regions.filter(region => region.id !== Number(id));
             await respond(undefined);
+        }
+    };
+}
+
+/** Number of regions of {@link regionPageSource}, enough to have many pages. */
+const PAGED_REGIONS_COUNT = 42;
+
+/**
+ * Source of regions that paginates and sorts them as a backend would, so the table only ever receives one page. It
+ * also deletes, so the same object is the `service` and gives the `fetchPage` of a table.
+ */
+export function regionPageSource(): ListDataSource<Region> & { fetchPage: FetchPage<Region> } {
+    let regions: Region[] = Array.from({ length: PAGED_REGIONS_COUNT }, (_, i) => ({
+        id: i + 1,
+        name: `Region ${i + 1}`,
+        cities: (i * 7) % 50
+    }));
+
+    return {
+        findAll: () => respond([...regions]),
+        delete: async id => {
+            regions = regions.filter(region => region.id !== Number(id));
+            await respond(undefined);
+        },
+        fetchPage: ({ page, size, sort }) => {
+            const key = sort.columnAccessor as keyof Region;
+            const direction = sort.direction === 'asc' ? 1 : -1;
+            const sorted = [...regions].sort(
+                (a, b) => direction * String(a[key]).localeCompare(String(b[key]), undefined, { numeric: true })
+            );
+            const from = (page - 1) * size;
+
+            return respond({ records: sorted.slice(from, from + size), totalRecords: regions.length });
         }
     };
 }

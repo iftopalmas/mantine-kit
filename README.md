@@ -49,7 +49,7 @@ Install the optional ones only if you use the components that need them:
 | `@mantine/form` | the form templates (`FormPage`, `CreateFormPage`, `EditFormPage`) and `DataForm`, which take a `useForm` form |
 | `@mantine/modals` | the confirmations of `Table` (delete), `ListPage` and `DataForm` |
 | `@mantine/dates` and `dayjs` (its peer dependency) | `DateField` |
-| `mantine-datatable` | `Table`, `ViewTable`, `ListPage` |
+| `mantine-datatable` | `Table`, `ViewTable`, `DataTableView` |
 | `echarts` | `EChart` and the chart types |
 | `exceljs` | Excel export |
 | `axios` | `AxiosHttpClient` |
@@ -117,11 +117,13 @@ module.exports = {
 
 ### CRUD list page
 
-`ListPage` shows the records in a sortable, paginated table with view, edit and delete actions. Its `service` is any
-object with `findAll` and `delete`:
+`ListPage` lays out the header with the "Add" button, optional filters and a table. The `Table` shows the records with
+view, edit and delete actions. Its `service` is any object with `delete`, and its `data` comes from a pagination hook:
 
 ```tsx
 import ListPage from '@ifto/mantine-kit/component/template/ListPage/ListPage';
+import Table from '@ifto/mantine-kit/component/organism/Table/Table';
+import { useClientPagination } from '@ifto/mantine-kit/component/organism/Table/useClientPagination';
 import type { ListDataSource } from '@ifto/mantine-kit/data/ListDataSource';
 
 type Region = { id?: number; name: string };
@@ -132,19 +134,79 @@ const regions: ListDataSource<Region> = {
 };
 
 export function RegionsPage() {
+    // The function must be stable (here, a method of a module constant), since a new one fetches again.
+    const data = useClientPagination(regions.findAll);
+
     return (
         <ListPage
             title="Regions"
             titlePlural="Regions"
             breadcrumbItems={[{ title: 'Regions', href: '/region' }]}
             addActionRoute="/region/create"
-            service={regions}
-            resourceBasePath="/region"
-            tableColumns={[{ accessor: 'name', title: 'Name', sortable: true }]}
-        />
+        >
+            <Table
+                data={data}
+                service={regions}
+                basePath="/region"
+                columns={[{ accessor: 'name', title: 'Name', sortable: true }]}
+            />
+        </ListPage>
     );
 }
 ```
+
+#### Client-side or server-side pagination
+
+The hook that creates the `data` of the `Table` defines where the records are sorted and paginated:
+
+| | `useClientPagination(fetchAll, { pagination })` | `useServerPagination(fetchPage)` |
+|---|---|---|
+| **Fetch** | all records at once | one page, with page, size and sort |
+| **Sorted and paginated by** | browser (sorting follows the locale) | backend |
+| **Total of records** | number of fetched records | `totalRecords` of the response |
+
+Both take a function that must be stable (e.g. with `useCallback`), as a new one fetches again.
+
+`fetchPage` receives the page, the size and the sort, and returns the records of that page and the total of records. The
+contract knows nothing about your backend, so convert it to the format of your API (here, Spring Data, returning a
+`PagedModel`, which puts the total of records in `page.totalElements`). The page starts at 1, or at the `firstPage`
+option (e.g. 0 for Spring), which only changes the requests: the table always shows the pages starting at 1.
+
+```tsx
+import { useCallback } from 'react';
+import { useServerPagination } from '@ifto/mantine-kit/component/organism/Table/useServerPagination';
+import type { FetchPage } from '@ifto/mantine-kit/data/PageRequest';
+
+export function RegionsTable({ name }: { name: string }) {
+    // A new function means the filter changed, which goes back to page 1.
+    const fetchPage: FetchPage<Region> = useCallback(
+        async ({ page, size, sort }) => {
+            const params = new URLSearchParams({
+                name,
+                page: String(page),
+                size: String(size),
+                sort: `${String(sort.columnAccessor)},${sort.direction}`
+            });
+            const response = await fetch(`/api/region?${params}`).then(result => result.json());
+
+            return { records: response.content, totalRecords: response.page.totalElements };
+        },
+        [name]
+    );
+    const data = useServerPagination(fetchPage, { firstPage: 0 });
+
+    return <Table data={data} service={regions} basePath="/region" columns={columns} />;
+}
+```
+
+With `useServerPagination`:
+
+- `sort.columnAccessor` holds the `sortKey` of the column, if it has one, or else its `accessor`. A calculated column
+  needs a `sortKey` or `sortable: false`.
+- The table goes back to page 1 when the page size, the sort or the filter changes, and to the last existing page when
+  the current one no longer exists (e.g. its last record was deleted).
+- The order of null values and the text collation are defined by the backend, so they can differ from client-side
+  pagination, which follows the locale and always puts null values last.
 
 ### CRUD form page
 
@@ -395,9 +457,10 @@ Every file is imported by its path inside `src`, without the extension, e.g.
 | `Navbar` | Side menu with links and collapsible groups, highlighting the current page. |
 | `PageHeader` | Page title with the breadcrumb and, in list pages, the "Add" button. |
 | `StatsGrid` | Responsive grid of `StatsCard`s, with placeholders while loading. |
-| `Table` | Table of the records of a data source, with view, edit and delete (with confirmation) actions. |
+| `Table` | Table of records with view, edit and delete (with confirmation) actions, paginated by `useClientPagination` or `useServerPagination`. |
 | `RowActions` | View, edit and delete buttons of a `Table` row. |
-| `ViewTable` | Sortable and paginated table (on top of mantine-datatable), with locale-aware sorting. |
+| `ViewTable` | Table that sorts (locale-aware) and paginates the given records in the browser (on top of mantine-datatable). |
+| `DataTableView` | Table that shows records as received, with the pagination and sort given by the caller. |
 
 The `EChart/chart` folder has chart types that build the ECharts option from generic series: `LineChart`, `BarChart`
 (negative values highlighted), `StackedBarChart` and `DonutChart`, with one panel per unit of measure.
@@ -407,7 +470,7 @@ The `EChart/chart` folder has chart types that build the ECharts option from gen
 | Component | What it does |
 |---|---|
 | `Layout` | App shell: header with the brand, color scheme toggle and user menu, collapsible side menu and content area. |
-| `ListPage` | List page of records: header with the "Add" button, optional filters and the `Table`. |
+| `ListPage` | List page of records: header with the "Add" button, optional filters and the table given as children. |
 | `FormPage` | Create, edit or view form page that saves the record in a `SaveDataSource`. |
 | `CreateFormPage` | Form page to create a record with a given function. |
 | `EditFormPage` | Form page to update a record with a given function. |

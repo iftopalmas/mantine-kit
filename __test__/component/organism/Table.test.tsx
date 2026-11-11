@@ -1,7 +1,10 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { ComponentProps, ReactElement } from 'react';
+
 import Table from '@/src/component/organism/Table/Table';
+import { useClientPagination } from '@/src/component/organism/Table/useClientPagination';
 import type { ListDataSource } from '@/src/data/ListDataSource';
 import type { Identifiable } from '@/src/model/Identifiable';
 import { KitProvider } from '@/src/provider/KitProvider';
@@ -16,8 +19,18 @@ interface Row extends Identifiable {
 
 const rows: Row[] = [{ id: 7, name: 'North' }];
 
-/** The data source is not called, since the data comes from customFetchMethod. */
+/** The data source is not called, since the data comes from fetchAll. */
 const service = {} as ListDataSource<Row>;
+
+/** Table whose records come from `fetchAll`, sorted and paginated in the browser, as an app uses it. */
+function RowTable({
+    fetchAll,
+    ...props
+}: Omit<ComponentProps<typeof Table<Row, ListDataSource<Row>>>, 'data'> & {
+    fetchAll: () => Promise<Row[]>;
+}): ReactElement {
+    return <Table {...props} data={useClientPagination(fetchAll)} />;
+}
 
 /**
  * Renders the table of a list page and waits for the data to load.
@@ -25,9 +38,9 @@ const service = {} as ListDataSource<Row>;
  */
 async function renderTable(getViewUrl?: (item: Row) => string): Promise<void> {
     render(
-        <Table
+        <RowTable
             service={service}
-            customFetchMethod={() => Promise.resolve(rows)}
+            fetchAll={() => Promise.resolve(rows)}
             columns={[{ accessor: 'name', title: 'Name' }]}
             basePath="/region"
             getViewUrl={getViewUrl}
@@ -93,9 +106,9 @@ test('does not pass the click on the view icon to the row', async () => {
 test('uses the texts of the locale and the route segments chosen by the app', async () => {
     render(
         <KitProvider router={router} locale="pt-BR" formRouteSegments={PORTUGUESE_FORM_ROUTE_SEGMENTS}>
-            <Table
+            <RowTable
                 service={service}
-                customFetchMethod={() => Promise.resolve(rows)}
+                fetchAll={() => Promise.resolve(rows)}
                 columns={[{ accessor: 'name', title: 'Name' }]}
                 basePath="/region"
             />
@@ -112,9 +125,9 @@ test('uses the texts of the locale and the route segments chosen by the app', as
 test('calls the custom edit function instead of opening the edit page', async () => {
     const onEdit = jest.fn();
     render(
-        <Table
+        <RowTable
             service={service}
-            customFetchMethod={() => Promise.resolve(rows)}
+            fetchAll={() => Promise.resolve(rows)}
             columns={[{ accessor: 'name', title: 'Name' }]}
             basePath="/region"
             customEditFunction={onEdit}
@@ -131,9 +144,9 @@ test('calls the custom edit function instead of opening the edit page', async ()
 
 test('hides the actions column when asked', async () => {
     render(
-        <Table
+        <RowTable
             service={service}
-            customFetchMethod={() => Promise.resolve(rows)}
+            fetchAll={() => Promise.resolve(rows)}
             columns={[{ accessor: 'name', title: 'Name' }]}
             basePath="/region"
             actionsSettings={{ canShowActions: false }}
@@ -148,9 +161,9 @@ test('hides the actions column when asked', async () => {
 
 test('shows an alert when the data cannot be loaded', async () => {
     render(
-        <Table
+        <RowTable
             service={service}
-            customFetchMethod={() => Promise.reject(new Error('HTTP 500'))}
+            fetchAll={() => Promise.reject(new Error('HTTP 500'))}
             columns={[{ accessor: 'name', title: 'Name' }]}
             basePath="/region"
         />,
