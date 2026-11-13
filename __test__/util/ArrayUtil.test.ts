@@ -100,4 +100,18 @@ describe('ArrayUtil', () => {
             [NaN, 0]
         ]);
     });
+
+    /** An app may have a matrix of any type, such as a year without value (`undefined`), with no cast. */
+    test('transposeMatrix(): transposes a matrix of any type and replaces an undefined element with the default', () => {
+        const matrix: (string | undefined)[][] = [['a', undefined], ['b']];
+
+        expect(transposeMatrix(matrix)).toStrictEqual([
+            ['a', 'b'],
+            [undefined, undefined]
+        ]);
+        expect(transposeMatrix(matrix, '-')).toStrictEqual([
+            ['a', 'b'],
+            ['-', '-']
+        ]);
+    });
 });
