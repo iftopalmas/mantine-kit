@@ -53,14 +53,15 @@ export function arraysMap(
 
 /**
  * Transposes a matrix, turning the rows into columns and vice versa.
- * @param matrix matrix to transpose, where each row is an array of values
+ * @param matrix matrix to transpose, where each row is an array of values of any type
  * @param defaultValForUndefinedCol value used when a row has no value for a column, which happens when the rows have
- *        different sizes. Without it, the missing column is `undefined`. The parameter has no default value on purpose:
+ *        different sizes. It also replaces an element that is already `undefined` or `null` in the matrix. Without it,
+ *        the missing column is `undefined`. The parameter has no default value on purpose:
  *        in JavaScript, passing `undefined` to a parameter with a default uses the default, so an `undefined`
  *        explicitly asked by the caller would become another value.
  * @return the transposed matrix
  */
-export function transposeMatrix(matrix: number[][], defaultValForUndefinedCol?: number): number[][] {
+export function transposeMatrix<T>(matrix: T[][], defaultValForUndefinedCol?: T): (T | undefined)[][] {
     const reducer = (acc: number, curr: number) => (curr > acc ? curr : acc);
 
     // Length of the longest row of the matrix
